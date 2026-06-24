@@ -1,0 +1,72 @@
+{
+  "name": "@tianjos/eslint-plugin-elegant",
+  "version": "0.1.0",
+  "description": "Opinionated ESLint rules for elegant, behavior-rich TypeScript: no flag arguments, no type assertions, no null returns, no public mutable state, and small focused classes.",
+  "keywords": [
+    "eslint",
+    "eslint-plugin",
+    "typescript",
+    "nestjs",
+    "code-quality",
+    "linting"
+  ],
+  "author": "Thiago <thiago@bullcredtech.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/tianjos/eslint-plugin-elegant#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tianjos/eslint-plugin-elegant.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tianjos/eslint-plugin-elegant/issues"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.test.json",
+    "test": "jest",
+    "release": "standard-version",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "dependencies": {
+    "@typescript-eslint/utils": "^8.0.0"
+  },
+  "peerDependencies": {
+    "@typescript-eslint/parser": ">=8",
+    "eslint": ">=9",
+    "typescript": ">=5"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.14.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "@typescript-eslint/rule-tester": "^8.0.0",
+    "@typescript-eslint/utils": "^8.0.0",
+    "eslint": "^9.0.0",
+    "jest": "^29.7.0",
+    "standard-version": "^9.5.0",
+    "ts-jest": "^29.2.0",
+    "typescript": "^5.6.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
