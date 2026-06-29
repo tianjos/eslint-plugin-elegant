@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-06-29
+
+### Changed
+
+- CI/tooling only (no changes to rules or published runtime): the publish
+  workflow now runs `npm publish --ignore-scripts` to avoid repeating the
+  build/test already run as explicit steps, and the GitHub Actions
+  (`actions/checkout`, `actions/setup-node`) were bumped off the deprecated
+  Node 20 runtime.
+
 ## [0.3.0] - 2026-06-29
 
 ### Added
@@ -44,7 +54,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **`no-public-mutable-props`** — disallows public mutable class properties, including public constructor parameter properties.
 - `recommended` config wiring the five rules plus the native `max-params` rule (max `3`).
 
-[Unreleased]: https://github.com/tianjos/eslint-plugin-elegant/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/tianjos/eslint-plugin-elegant/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/tianjos/eslint-plugin-elegant/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/tianjos/eslint-plugin-elegant/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/tianjos/eslint-plugin-elegant/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/tianjos/eslint-plugin-elegant/releases/tag/v0.1.0
