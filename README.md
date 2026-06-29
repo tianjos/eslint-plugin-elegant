@@ -190,6 +190,16 @@ The package ships a single CommonJS build that is consumable as both
 `import elegant from '@tianjos/eslint-plugin-elegant'`. The exported object
 exposes `{ meta, rules, configs }`.
 
+## Prior art
+
+This plugin is a TypeScript adaptation of [Elegant Objects](https://www.elegantobjects.org/)
+(Yegor Bugayenko) and [qulice](https://github.com/yegor256/qulice) — the Java
+quality enforcer that codifies those principles on top of Checkstyle and PMD.
+Rules such as `no-logic-in-constructor` (qulice's `ConstructorsCodeFreeCheck`),
+`no-null`, `no-getters-setters`, and `no-static-members` are ports of that
+philosophy. The concepts are reimplemented from scratch against the TypeScript
+AST; no qulice code is used.
+
 ## License
 
 [MIT](./LICENSE) © Thiago
