@@ -87,47 +87,71 @@ The `recommended` config enables every custom rule plus the native
 
 ### Rule details
 
-- **`no-boolean-param`** — a boolean argument almost always means the callee
-  does two things. Prefer two intention-revealing functions or an options
-  object. Flags both annotated (`flag: boolean`) and boolean-defaulted
-  (`flag = false`) parameters.
-- **`max-class-methods`** — a proxy for the Single Responsibility Principle.
-  Constructors are not counted; getters and setters are.
-- **`no-type-assertion`** — assertions silence the type checker. Reach for a
-  type guard, a generic, or a correctly typed value instead. `as const` is
-  permitted because it narrows rather than widens.
-- **`no-null-return`** — keeps absence out of return values; model it with an
-  explicit domain type or throw.
-- **`no-public-mutable-props`** — public state should be `readonly` so callers
-  cannot break an aggregate's invariants. `private`/`protected` members and
-  `readonly` members are allowed.
-- **`no-logic-in-constructor`** — a constructor should only wire arguments to
-  fields. Validation, transformation, and I/O belong in a static factory or a
-  method, keeping object construction predictable. Parameter properties
-  (`constructor(private readonly x: T)`) and a leading `super(...)` are allowed;
-  computed right-hand sides (`this.x = x * 2`, `this.items = items.slice()`) and
-  any non-assignment statement are flagged.
-- **`no-getters-setters`** — getters and setters turn objects into data bags;
-  prefer methods that expose behavior. Native `get`/`set` accessors (and
-  `accessor` fields) are always flagged. The opt-in `{ methods: true }` option
-  also flags conventional `getX`/`setX` methods — useful for strict Elegant
-  Objects style, but noisy around repositories and framework hooks, so it stays
-  off in `recommended`.
-- **`no-instanceof`** — `instanceof` is type discrimination that belongs inside a
-  polymorphic method on the object. Pairs with `no-type-assertion` to keep
-  type-based branching out of the codebase.
-- **`no-static-members`** — static state and behavior cannot be injected,
-  substituted, or mocked. Prefer instances (with dependency injection) and a
-  module-level `const` for shared values. The `{ allowReadonly: true }` option
-  permits `static readonly` constants. Note this also flags `static` factory
-  methods (`static create()`), which are common; relax per-file if your design
-  relies on them.
-- **`no-null`** — completes `no-null-return` by banning the `null` literal as a
-  value everywhere (`const x = null`, `x === null`, `fn(null)`), pushing absence
-  into explicit types or `undefined`. `null` in type positions (`string | null`)
-  and a direct `return null` (owned by `no-null-return`) are left alone. This is
-  strict and will flag idioms like `JSON.stringify(x, null, 2)` — relax it in the
-  files where you interoperate with null-based APIs.
+#### `no-boolean-param`
+
+A boolean argument almost always means the callee does two things. Prefer two
+intention-revealing functions or an options object. Flags both annotated
+(`flag: boolean`) and boolean-defaulted (`flag = false`) parameters.
+
+#### `max-class-methods`
+
+A proxy for the Single Responsibility Principle. Constructors are not counted;
+getters and setters are. Configurable via `{ max: number }` (default `10`).
+
+#### `no-type-assertion`
+
+Assertions silence the type checker. Reach for a type guard, a generic, or a
+correctly typed value instead. `as const` is permitted because it narrows rather
+than widens.
+
+#### `no-null-return`
+
+Keeps absence out of return values; model it with an explicit domain type or
+throw.
+
+#### `no-public-mutable-props`
+
+Public state should be `readonly` so callers cannot break an aggregate's
+invariants. `private`/`protected` members and `readonly` members are allowed.
+
+#### `no-logic-in-constructor`
+
+A constructor should only wire arguments to fields. Validation, transformation,
+and I/O belong in a static factory or a method, keeping object construction
+predictable. Parameter properties (`constructor(private readonly x: T)`) and a
+leading `super(...)` are allowed; computed right-hand sides (`this.x = x * 2`,
+`this.items = items.slice()`) and any non-assignment statement are flagged.
+
+#### `no-getters-setters`
+
+Getters and setters turn objects into data bags; prefer methods that expose
+behavior. Native `get`/`set` accessors (and `accessor` fields) are always
+flagged. The opt-in `{ methods: true }` option also flags conventional
+`getX`/`setX` methods — useful for strict Elegant Objects style, but noisy
+around repositories and framework hooks, so it stays off in `recommended`.
+
+#### `no-instanceof`
+
+`instanceof` is type discrimination that belongs inside a polymorphic method on
+the object. Pairs with `no-type-assertion` to keep type-based branching out of
+the codebase.
+
+#### `no-static-members`
+
+Static state and behavior cannot be injected, substituted, or mocked. Prefer
+instances (with dependency injection) and a module-level `const` for shared
+values. The `{ allowReadonly: true }` option permits `static readonly`
+constants. Note this also flags `static` factory methods (`static create()`),
+which are common; relax per-file if your design relies on them.
+
+#### `no-null`
+
+Completes `no-null-return` by banning the `null` literal as a value everywhere
+(`const x = null`, `x === null`, `fn(null)`), pushing absence into explicit types
+or `undefined`. `null` in type positions (`string | null`) and a direct
+`return null` (owned by `no-null-return`) are left alone. This is strict and will
+flag idioms like `JSON.stringify(x, null, 2)` — relax it in the files where you
+interoperate with null-based APIs.
 
 ## Configuration
 
