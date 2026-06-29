@@ -4,8 +4,10 @@ import noBooleanParam from './rules/no-boolean-param';
 import noGettersSetters from './rules/no-getters-setters';
 import noInstanceof from './rules/no-instanceof';
 import noLogicInConstructor from './rules/no-logic-in-constructor';
+import noNull from './rules/no-null';
 import noNullReturn from './rules/no-null-return';
 import noPublicMutableProps from './rules/no-public-mutable-props';
+import noStaticMembers from './rules/no-static-members';
 import noTypeAssertion from './rules/no-type-assertion';
 
 const { name, version } = require('../package.json') as {
@@ -22,6 +24,8 @@ const rules = {
   'no-logic-in-constructor': noLogicInConstructor,
   'no-getters-setters': noGettersSetters,
   'no-instanceof': noInstanceof,
+  'no-static-members': noStaticMembers,
+  'no-null': noNull,
 };
 
 type Plugin = {
@@ -54,6 +58,8 @@ plugin.configs.recommended = {
     'elegant/no-logic-in-constructor': 'error',
     'elegant/no-getters-setters': 'error',
     'elegant/no-instanceof': 'error',
+    'elegant/no-static-members': 'error',
+    'elegant/no-null': 'error',
     'max-params': ['warn', { max: 3 }],
   },
 };

@@ -1,6 +1,6 @@
 {
   "name": "@tianjos/eslint-plugin-elegant",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Opinionated ESLint rules for elegant, behavior-rich TypeScript: no flag arguments, no type assertions, no null returns, no public mutable state, and small focused classes.",
   "keywords": [
     "eslint",

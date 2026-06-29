@@ -81,6 +81,8 @@ The `recommended` config enables every custom rule plus the native
 | `elegant/no-logic-in-constructor`      | custom | Any constructor code beyond `this.field = value` stores and a `super(...)` call  | `error`       |
 | `elegant/no-getters-setters`           | custom | `get`/`set` accessors (and `getX`/`setX` methods with `{ methods: true }`)        | `error`       |
 | `elegant/no-instanceof`                | custom | Use of the `instanceof` operator                                                | `error`       |
+| `elegant/no-static-members`            | custom | Static methods, properties, accessors, and blocks (`allowReadonly` to permit constants) | `error` |
+| `elegant/no-null`                      | custom | The `null` literal as a value (type annotations and direct `return null` excepted) | `error`     |
 | `max-params`                           | native | Functions declaring more than `max` parameters                                  | `warn` (max 3) |
 
 ### Rule details
@@ -114,6 +116,18 @@ The `recommended` config enables every custom rule plus the native
 - **`no-instanceof`** — `instanceof` is type discrimination that belongs inside a
   polymorphic method on the object. Pairs with `no-type-assertion` to keep
   type-based branching out of the codebase.
+- **`no-static-members`** — static state and behavior cannot be injected,
+  substituted, or mocked. Prefer instances (with dependency injection) and a
+  module-level `const` for shared values. The `{ allowReadonly: true }` option
+  permits `static readonly` constants. Note this also flags `static` factory
+  methods (`static create()`), which are common; relax per-file if your design
+  relies on them.
+- **`no-null`** — completes `no-null-return` by banning the `null` literal as a
+  value everywhere (`const x = null`, `x === null`, `fn(null)`), pushing absence
+  into explicit types or `undefined`. `null` in type positions (`string | null`)
+  and a direct `return null` (owned by `no-null-return`) are left alone. This is
+  strict and will flag idioms like `JSON.stringify(x, null, 2)` — relax it in the
+  files where you interoperate with null-based APIs.
 
 ## Configuration
 

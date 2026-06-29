@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-06-29
+
+### Added
+
+- **`no-static-members`** — disallows static methods, properties, accessors, and
+  static blocks (the `{ allowReadonly: true }` option permits `static readonly`
+  constants). Enabled as `error` in the `recommended` config.
+- **`no-null`** — disallows the `null` literal as a value anywhere except inside
+  type annotations; direct `return null` remains owned by `no-null-return`.
+  Enabled as `error` in the `recommended` config.
+
 ## [0.2.0] - 2026-06-29
 
 ### Added
@@ -33,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **`no-public-mutable-props`** — disallows public mutable class properties, including public constructor parameter properties.
 - `recommended` config wiring the five rules plus the native `max-params` rule (max `3`).
 
-[Unreleased]: https://github.com/tianjos/eslint-plugin-elegant/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/tianjos/eslint-plugin-elegant/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/tianjos/eslint-plugin-elegant/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/tianjos/eslint-plugin-elegant/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/tianjos/eslint-plugin-elegant/releases/tag/v0.1.0
