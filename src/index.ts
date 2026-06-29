@@ -1,6 +1,9 @@
 import type { TSESLint } from '@typescript-eslint/utils';
 import maxClassMethods from './rules/max-class-methods';
 import noBooleanParam from './rules/no-boolean-param';
+import noGettersSetters from './rules/no-getters-setters';
+import noInstanceof from './rules/no-instanceof';
+import noLogicInConstructor from './rules/no-logic-in-constructor';
 import noNullReturn from './rules/no-null-return';
 import noPublicMutableProps from './rules/no-public-mutable-props';
 import noTypeAssertion from './rules/no-type-assertion';
@@ -16,6 +19,9 @@ const rules = {
   'no-type-assertion': noTypeAssertion,
   'no-null-return': noNullReturn,
   'no-public-mutable-props': noPublicMutableProps,
+  'no-logic-in-constructor': noLogicInConstructor,
+  'no-getters-setters': noGettersSetters,
+  'no-instanceof': noInstanceof,
 };
 
 type Plugin = {
@@ -45,6 +51,9 @@ plugin.configs.recommended = {
     'elegant/no-type-assertion': 'error',
     'elegant/no-null-return': 'error',
     'elegant/no-public-mutable-props': 'error',
+    'elegant/no-logic-in-constructor': 'error',
+    'elegant/no-getters-setters': 'error',
+    'elegant/no-instanceof': 'error',
     'max-params': ['warn', { max: 3 }],
   },
 };

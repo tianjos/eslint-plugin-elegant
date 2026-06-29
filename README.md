@@ -78,6 +78,9 @@ The `recommended` config enables every custom rule plus the native
 | `elegant/no-type-assertion`            | custom | `value as T` and `<T>value` assertions (`as const` is allowed)                  | `error`       |
 | `elegant/no-null-return`               | custom | `return null` statements                                                        | `error`       |
 | `elegant/no-public-mutable-props`      | custom | Public, non-`readonly` class properties and public constructor parameter props  | `error`       |
+| `elegant/no-logic-in-constructor`      | custom | Any constructor code beyond `this.field = value` stores and a `super(...)` call  | `error`       |
+| `elegant/no-getters-setters`           | custom | `get`/`set` accessors (and `getX`/`setX` methods with `{ methods: true }`)        | `error`       |
+| `elegant/no-instanceof`                | custom | Use of the `instanceof` operator                                                | `error`       |
 | `max-params`                           | native | Functions declaring more than `max` parameters                                  | `warn` (max 3) |
 
 ### Rule details
@@ -96,6 +99,21 @@ The `recommended` config enables every custom rule plus the native
 - **`no-public-mutable-props`** — public state should be `readonly` so callers
   cannot break an aggregate's invariants. `private`/`protected` members and
   `readonly` members are allowed.
+- **`no-logic-in-constructor`** — a constructor should only wire arguments to
+  fields. Validation, transformation, and I/O belong in a static factory or a
+  method, keeping object construction predictable. Parameter properties
+  (`constructor(private readonly x: T)`) and a leading `super(...)` are allowed;
+  computed right-hand sides (`this.x = x * 2`, `this.items = items.slice()`) and
+  any non-assignment statement are flagged.
+- **`no-getters-setters`** — getters and setters turn objects into data bags;
+  prefer methods that expose behavior. Native `get`/`set` accessors (and
+  `accessor` fields) are always flagged. The opt-in `{ methods: true }` option
+  also flags conventional `getX`/`setX` methods — useful for strict Elegant
+  Objects style, but noisy around repositories and framework hooks, so it stays
+  off in `recommended`.
+- **`no-instanceof`** — `instanceof` is type discrimination that belongs inside a
+  polymorphic method on the object. Pairs with `no-type-assertion` to keep
+  type-based branching out of the codebase.
 
 ## Configuration
 
