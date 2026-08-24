@@ -88,6 +88,7 @@ The `recommended` config enables every custom rule plus two native ones,
 | `elegant/no-null`                      | custom | The `null` literal as a value (type annotations and direct `return null` excepted) | `error`     |
 | `elegant/no-comments-in-function-body` | custom | Comments inside function bodies (directives and empty blocks excepted)          | `error`       |
 | `elegant/no-else-after-throw`          | custom | An `else` branch when the `then` branch always throws                           | `error`       |
+| `elegant/no-interpolated-log-message`  | custom | Log messages built by interpolation or concatenation                            | `error`       |
 | `max-params`                           | native | Functions declaring more than `max` parameters                                  | `warn` (max 3) |
 | `no-else-return`                       | native | An `else` branch when the `then` branch always returns (`allowElseIf: false`)   | `error`       |
 
@@ -293,6 +294,51 @@ rule's defaults? Override it in one line:
 ```js
 'no-else-return': 'error',
 ```
+
+#### `no-interpolated-log-message`
+
+A log message should be a constant, with everything that varies passed as
+structured data. This is not a style preference: `` `order ${id} confirmed` ``
+produces one distinct message per order, which no aggregator can group, and it
+buries `id` inside prose instead of leaving it as a field you can filter on.
+
+```ts
+// before — N messages, and the id is not queryable
+this.logger.log(`order ${id} confirmed for ${customer}`);
+
+// after — one message, two fields
+this.logger.log('order confirmed', { orderId: id, customer });
+```
+
+The rule looks only at the **message argument**, which it takes to be the first
+argument that is not an object literal. That lands on the message under either
+convention — `info(message, data)` as in NestJS and winston, `info(data,
+message)` as in pino — so the rule never dictates where your data goes. An
+interpolated *later* argument is left alone, since that position is context
+rather than the message.
+
+Flagged: template literals with expressions, and `+` concatenation. A plain
+identifier passes, so `logger.info(message)` is fine — chasing that would need
+type information, which no rule in this plugin requires.
+
+A call counts as logging when the method is a level (`log`, `info`, `warn`,
+`error`, `debug`, `verbose`, `trace`, `fatal`) and the receiver is named `logger`
+or `log`, whether local or a field (`this.logger.info`). Both lists are widened
+with `{ objects: string[], methods: string[] }`:
+
+```js
+'elegant/no-interpolated-log-message': ['error', { objects: ['audit'] }],
+```
+
+**Known limitation.** When the first argument is an identifier, it is taken for
+the message, so pino's error form slips through:
+
+```ts
+logger.error(err, `order ${id} failed`); // not reported
+```
+
+Telling that apart from `logger.info(message)` needs type information. The case
+is pinned by a test so the behaviour is deliberate rather than accidental.
 
 ## Configuration
 

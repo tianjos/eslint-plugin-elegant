@@ -7,6 +7,7 @@ import noCommentsInFunctionBody from './rules/no-comments-in-function-body';
 import noElseAfterThrow from './rules/no-else-after-throw';
 import noGettersSetters from './rules/no-getters-setters';
 import noInstanceof from './rules/no-instanceof';
+import noInterpolatedLogMessage from './rules/no-interpolated-log-message';
 import noLogicInConstructor from './rules/no-logic-in-constructor';
 import noNull from './rules/no-null';
 import noNullReturn from './rules/no-null-return';
@@ -34,6 +35,7 @@ const rules = {
   'no-null': noNull,
   'no-comments-in-function-body': noCommentsInFunctionBody,
   'no-else-after-throw': noElseAfterThrow,
+  'no-interpolated-log-message': noInterpolatedLogMessage,
 };
 
 type Plugin = {
@@ -72,6 +74,7 @@ plugin.configs.recommended = {
     'elegant/no-null': 'error',
     'elegant/no-comments-in-function-body': 'error',
     'elegant/no-else-after-throw': 'error',
+    'elegant/no-interpolated-log-message': 'error',
     'max-params': ['warn', { max: 3 }],
     'no-else-return': ['error', { allowElseIf: false }],
   },
