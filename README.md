@@ -76,6 +76,7 @@ The `recommended` config enables every custom rule plus the native
 | `elegant/no-boolean-param`             | custom | Boolean parameters (flag arguments) on functions, methods, and constructors     | `error`       |
 | `elegant/max-class-methods`            | custom | Classes with more methods than the configured `max` (constructors excluded)     | `warn` (max 10) |
 | `elegant/max-class-dependencies`       | custom | Classes depending on more distinct collaborators than `max` (constructor injections plus `new`) | `warn` (max 4) |
+| `elegant/max-class-fields`             | custom | Classes holding more instance fields than `max` (declared fields plus parameter properties) | `warn` (max 5) |
 | `elegant/no-type-assertion`            | custom | `value as T` and `<T>value` assertions (`as const` is allowed)                  | `error`       |
 | `elegant/no-null-return`               | custom | `return null` statements                                                        | `error`       |
 | `elegant/no-public-mutable-props`      | custom | Public, non-`readonly` class properties and public constructor parameter props  | `error`       |
@@ -127,6 +128,37 @@ budget for it:
 ```js
 'elegant/max-class-dependencies': ['warn', { max: 4, ignore: ['Logger'] }],
 ```
+
+#### `max-class-fields`
+
+The third axis of class size, after methods and collaborators: a class carrying
+a dozen fields is a record with a namespace, not a model. Counts instance fields
+declared in the body — plain, `abstract`, or `accessor` — plus every constructor
+parameter property. Methods and accessors belong to `max-class-methods`, and
+`static` members to `no-static-members`, so neither is counted here.
+
+Decorated properties are skipped by default. `@Column`, `@IsString` and
+`@ApiProperty` map a field to a table or a payload, so a DTO or an ORM entity
+declares one field per column by design and has no business inside a budget:
+
+```ts
+class CreateOrderDto {
+  @IsString() customerId: string; // not counted
+  @IsInt() quantity: number; // not counted
+}
+```
+
+**The exemption stops at the constructor.** A decorator on a parameter is
+injection, not mapping, so `@Inject(TOKEN) private readonly repo: Repo` stays
+inside the budget — otherwise a service wired entirely through tokens would
+count zero fields, which is exactly the class the rule exists to catch. Set
+`{ ignoreDecorated: false }` to budget mapped properties too.
+
+Configurable via `{ max: number, ignoreDecorated: boolean }` (default `max: 5`,
+`ignoreDecorated: true`). The default leaves room for the four collaborators
+`max-class-dependencies` allows plus one field of genuine state; past that the
+two rules deliberately overlap, because a class over both budgets is over-sized
+on both axes.
 
 #### `no-type-assertion`
 
@@ -187,14 +219,15 @@ interoperate with null-based APIs.
 
 ### Overriding thresholds
 
-`max-class-methods`, `max-class-dependencies`, and the native `max-params` all
-take a `max` option:
+`max-class-methods`, `max-class-dependencies`, `max-class-fields`, and the
+native `max-params` all take a `max` option:
 
 ```js
 rules: {
   ...elegant.configs.recommended.rules,
   'elegant/max-class-methods': ['warn', { max: 15 }],
   'elegant/max-class-dependencies': ['warn', { max: 6 }],
+  'elegant/max-class-fields': ['warn', { max: 8 }],
   'max-params': ['warn', { max: 4 }],
 }
 ```
@@ -211,6 +244,7 @@ block scoped to your spec globs:
     'elegant/no-boolean-param': 'off',
     'elegant/max-class-methods': 'off',
     'elegant/max-class-dependencies': 'off',
+    'elegant/max-class-fields': 'off',
     'max-params': 'off',
   },
 }
@@ -230,6 +264,7 @@ This plugin is a TypeScript adaptation of [Elegant Objects](https://www.eleganto
 quality enforcer that codifies those principles on top of Checkstyle and PMD.
 Rules such as `no-logic-in-constructor` (qulice's `ConstructorsCodeFreeCheck`),
 `max-class-dependencies` (Checkstyle's `ClassDataAbstractionCoupling`),
+`max-class-fields` (PMD's `TooManyFields`),
 `no-null`, `no-getters-setters`, and `no-static-members` are ports of that
 philosophy. The concepts are reimplemented from scratch against the TypeScript
 AST; no qulice code is used.

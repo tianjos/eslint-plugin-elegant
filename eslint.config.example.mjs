@@ -21,6 +21,7 @@ export default [
       // Override a threshold when a class legitimately needs more surface:
       // 'elegant/max-class-methods': ['warn', { max: 15 }],
       // 'elegant/max-class-dependencies': ['warn', { max: 6, ignore: ['Logger'] }],
+      // 'elegant/max-class-fields': ['warn', { max: 8 }],
       // 'max-params': ['warn', { max: 4 }],
     },
   },
@@ -33,6 +34,7 @@ export default [
       'elegant/no-boolean-param': 'off',
       'elegant/max-class-methods': 'off',
       'elegant/max-class-dependencies': 'off',
+      'elegant/max-class-fields': 'off',
       'max-params': 'off',
     },
   },
