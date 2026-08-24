@@ -68,8 +68,9 @@ A complete, copy-pasteable example (including test-file overrides) lives in
 
 ## Rules
 
-The `recommended` config enables every custom rule plus the native
-[`max-params`](https://eslint.org/docs/latest/rules/max-params) rule.
+The `recommended` config enables every custom rule plus two native ones,
+[`max-params`](https://eslint.org/docs/latest/rules/max-params) and
+[`no-else-return`](https://eslint.org/docs/latest/rules/no-else-return).
 
 | Rule                                   | Source | What it catches                                                                 | `recommended` |
 | -------------------------------------- | ------ | ------------------------------------------------------------------------------- | ------------- |
@@ -86,7 +87,9 @@ The `recommended` config enables every custom rule plus the native
 | `elegant/no-static-members`            | custom | Static methods, properties, accessors, and blocks (`allowReadonly` to permit constants) | `error` |
 | `elegant/no-null`                      | custom | The `null` literal as a value (type annotations and direct `return null` excepted) | `error`     |
 | `elegant/no-comments-in-function-body` | custom | Comments inside function bodies (directives and empty blocks excepted)          | `error`       |
+| `elegant/no-else-after-throw`          | custom | An `else` branch when the `then` branch always throws                           | `error`       |
 | `max-params`                           | native | Functions declaring more than `max` parameters                                  | `warn` (max 3) |
+| `no-else-return`                       | native | An `else` branch when the `then` branch always returns (`allowElseIf: false`)   | `error`       |
 
 ### Rule details
 
@@ -249,6 +252,46 @@ function run(): void {
     // the failure is expected here
   }
 }
+```
+
+#### `no-else-after-throw`
+
+When the `then` branch throws, control never reaches what follows, so `else`
+carries no information and only deepens nesting. Drop it and let the alternative
+sit at the outer level, where it reads as the normal path rather than one of two
+symmetric cases:
+
+```ts
+// before
+if (amount < 0) {
+  throw new NegativeAmount(amount);
+} else {
+  process(amount);
+}
+
+// after
+if (amount < 0) {
+  throw new NegativeAmount(amount);
+}
+process(amount);
+```
+
+A branch counts as always throwing when it is a bare `throw` or a block whose
+**last** statement is one. The check does not recurse, which is deliberate: a
+block ending in a nested `if` may or may not throw, and there `else` still says
+something.
+
+`else if` is flagged too, since the same rewrite applies. The rule has no
+options and no autofix — dedenting a block reliably is the formatter's job, not
+a linter's.
+
+Its sibling for `return` is the native
+[`no-else-return`](https://eslint.org/docs/latest/rules/no-else-return), which
+`recommended` enables with `allowElseIf: false` to match. Prefer the native
+rule's defaults? Override it in one line:
+
+```js
+'no-else-return': 'error',
 ```
 
 ## Configuration
