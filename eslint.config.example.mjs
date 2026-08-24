@@ -31,6 +31,7 @@ export default [
     rules: {
       'elegant/no-boolean-param': 'off',
       'elegant/max-class-methods': 'off',
+      'elegant/no-comments-in-function-body': 'off',
       'max-params': 'off',
     },
   },
