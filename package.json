@@ -1,6 +1,6 @@
 {
   "name": "@tianjos/eslint-plugin-elegant",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "description": "Opinionated ESLint rules for elegant, behavior-rich TypeScript: honest types, encapsulated state, small uncoupled classes, guard-clause flow, and structured logging. Built for NestJS and DDD codebases.",
   "keywords": [
     "eslint",

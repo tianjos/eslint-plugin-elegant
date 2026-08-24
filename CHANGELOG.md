@@ -1,16 +1,18 @@
 # Changelog
 
-All notable changes to this project are documented in this file.
+All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.4.0](https://github.com/tianjos/eslint-plugin-elegant/compare/v0.3.2...v0.4.0) (2026-08-24)
 
-## [Unreleased]
 
-### Added
+### Features
 
-- README "Prior art" section crediting Elegant Objects (Yegor Bugayenko) and
-  qulice as the inspiration for the rule set.
+* add max-class-dependencies rule ([66c898e](https://github.com/tianjos/eslint-plugin-elegant/commit/66c898e3acec9bb5e79a878cbaaa9074ab67b4d2))
+* add max-class-fields rule ([f2de130](https://github.com/tianjos/eslint-plugin-elegant/commit/f2de130043c00b79d70970a88724e570e972e739))
+* add max-returns rule ([d87bdba](https://github.com/tianjos/eslint-plugin-elegant/commit/d87bdba5b09ccb7aba022d07f57b8d9cc2835b54))
+* add no-comments-in-function-body rule ([2adcd7f](https://github.com/tianjos/eslint-plugin-elegant/commit/2adcd7fbec5397430e47158e807e325368aa41d0))
+* add no-else-after-throw rule ([1b3c230](https://github.com/tianjos/eslint-plugin-elegant/commit/1b3c230916c0688fd4c561194a5368be72a569d6))
+* add no-interpolated-log-message rule ([709fbe2](https://github.com/tianjos/eslint-plugin-elegant/commit/709fbe2678dd86747e66e14af7eaa9fbc7bc5e88))
 
 ## [0.3.2] - 2026-06-29
 
