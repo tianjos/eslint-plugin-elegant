@@ -89,6 +89,7 @@ The `recommended` config enables every custom rule plus two native ones,
 | `elegant/no-comments-in-function-body` | custom | Comments inside function bodies (directives and empty blocks excepted)          | `error`       |
 | `elegant/no-else-after-throw`          | custom | An `else` branch when the `then` branch always throws                           | `error`       |
 | `elegant/no-interpolated-log-message`  | custom | Log messages built by interpolation or concatenation                            | `error`       |
+| `elegant/max-returns`                  | custom | Functions returning from more places than `max`                                 | `warn` (max 3) |
 | `max-params`                           | native | Functions declaring more than `max` parameters                                  | `warn` (max 3) |
 | `no-else-return`                       | native | An `else` branch when the `then` branch always returns (`allowElseIf: false`)   | `error`       |
 
@@ -339,6 +340,36 @@ logger.error(err, `order ${id} failed`); // not reported
 
 Telling that apart from `logger.info(message)` needs type information. The case
 is pinned by a test so the behaviour is deliberate rather than accidental.
+
+#### `max-returns`
+
+A port of Checkstyle's `ReturnCount`, but not of its threshold. qulice sets it
+to `1` — a single exit — which reads well in Java and badly here, because it
+outlaws the guard clause that `no-else-after-throw` in this very preset pushes
+you towards. Two rules in one config should not disagree.
+
+At `max: 3` the rule stops arguing about single exit and measures sprawl
+instead. Two or three guards followed by a final `return` pass; a function
+leaving from six different places is the one worth splitting.
+
+```ts
+// passes — idiomatic guards
+function charge(amount: number): number {
+  if (amount < 0) return 0;
+  if (amount > limit) return limit;
+  return amount;
+}
+```
+
+Every function gets its own budget, so a callback's exits are never charged to
+the function hosting it. Bare `return;` counts — leaving early is leaving,
+value or not. An arrow with an expression body has no `return` statement at all
+and never trips the rule.
+
+Functions are reported by the name that binds them — a declaration's own, a
+method's key, or the `const` or class field holding an arrow — falling back to
+`(anonymous)` for an inline callback. Configurable via `{ max: number }`
+(default `3`).
 
 ## Configuration
 

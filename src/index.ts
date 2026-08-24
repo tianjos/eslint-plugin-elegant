@@ -1,6 +1,7 @@
 import type { TSESLint } from '@typescript-eslint/utils';
 import maxClassDependencies from './rules/max-class-dependencies';
 import maxClassFields from './rules/max-class-fields';
+import maxReturns from './rules/max-returns';
 import maxClassMethods from './rules/max-class-methods';
 import noBooleanParam from './rules/no-boolean-param';
 import noCommentsInFunctionBody from './rules/no-comments-in-function-body';
@@ -36,6 +37,7 @@ const rules = {
   'no-comments-in-function-body': noCommentsInFunctionBody,
   'no-else-after-throw': noElseAfterThrow,
   'no-interpolated-log-message': noInterpolatedLogMessage,
+  'max-returns': maxReturns,
 };
 
 type Plugin = {
@@ -64,6 +66,7 @@ plugin.configs.recommended = {
     'elegant/max-class-methods': ['warn', { max: 10 }],
     'elegant/max-class-dependencies': ['warn', { max: 4 }],
     'elegant/max-class-fields': ['warn', { max: 5 }],
+    'elegant/max-returns': ['warn', { max: 3 }],
     'elegant/no-type-assertion': 'error',
     'elegant/no-null-return': 'error',
     'elegant/no-public-mutable-props': 'error',
