@@ -1,4 +1,5 @@
 import type { TSESLint } from '@typescript-eslint/utils';
+import maxClassDependencies from './rules/max-class-dependencies';
 import maxClassMethods from './rules/max-class-methods';
 import noBooleanParam from './rules/no-boolean-param';
 import noGettersSetters from './rules/no-getters-setters';
@@ -18,6 +19,7 @@ const { name, version } = require('../package.json') as {
 const rules = {
   'no-boolean-param': noBooleanParam,
   'max-class-methods': maxClassMethods,
+  'max-class-dependencies': maxClassDependencies,
   'no-type-assertion': noTypeAssertion,
   'no-null-return': noNullReturn,
   'no-public-mutable-props': noPublicMutableProps,
@@ -52,6 +54,7 @@ plugin.configs.recommended = {
   rules: {
     'elegant/no-boolean-param': 'error',
     'elegant/max-class-methods': ['warn', { max: 10 }],
+    'elegant/max-class-dependencies': ['warn', { max: 4 }],
     'elegant/no-type-assertion': 'error',
     'elegant/no-null-return': 'error',
     'elegant/no-public-mutable-props': 'error',

@@ -75,6 +75,7 @@ The `recommended` config enables every custom rule plus the native
 | -------------------------------------- | ------ | ------------------------------------------------------------------------------- | ------------- |
 | `elegant/no-boolean-param`             | custom | Boolean parameters (flag arguments) on functions, methods, and constructors     | `error`       |
 | `elegant/max-class-methods`            | custom | Classes with more methods than the configured `max` (constructors excluded)     | `warn` (max 10) |
+| `elegant/max-class-dependencies`       | custom | Classes depending on more distinct collaborators than `max` (constructor injections plus `new`) | `warn` (max 4) |
 | `elegant/no-type-assertion`            | custom | `value as T` and `<T>value` assertions (`as const` is allowed)                  | `error`       |
 | `elegant/no-null-return`               | custom | `return null` statements                                                        | `error`       |
 | `elegant/no-public-mutable-props`      | custom | Public, non-`readonly` class properties and public constructor parameter props  | `error`       |
@@ -97,6 +98,35 @@ intention-revealing functions or an options object. Flags both annotated
 
 A proxy for the Single Responsibility Principle. Constructors are not counted;
 getters and setters are. Configurable via `{ max: number }` (default `10`).
+
+#### `max-class-dependencies`
+
+The coupling counterpart to `max-class-methods`: a class that needs six
+collaborators to do its job is coordinating, not modelling. Counts the distinct
+types annotated on constructor parameters plus every type instantiated with
+`new` inside the class body — so a dependency hidden behind `new HttpClient()`
+weighs the same as an injected one.
+
+De-duplication keeps type arguments, so `Repository<Order>` and
+`Repository<Customer>` count as two collaborators while the same `Clock`
+injected twice counts as one. Nested classes are budgeted independently of their
+host.
+
+Three things never count: primitives and inline types (they are not type
+references), a default list of ambient built-ins (`Date`, `Map`, `Set`,
+`Promise`, `Error`, `Array`, `RegExp`, `URL`, `WeakMap`, `WeakSet`), and
+exceptions raised with `throw new ...`. That last exclusion is what makes the
+rule usable in NestJS, where `throw new NotFoundException()` is routine and says
+nothing about a class's design.
+
+Configurable via `{ max: number, ignore: string[] }` (default `max: 4`).
+`ignore` adds to the built-in list — reach for it when an ambient concern such
+as `Logger` or `ConfigService` is in every constructor and you would rather not
+budget for it:
+
+```js
+'elegant/max-class-dependencies': ['warn', { max: 4, ignore: ['Logger'] }],
+```
 
 #### `no-type-assertion`
 
@@ -157,12 +187,14 @@ interoperate with null-based APIs.
 
 ### Overriding thresholds
 
-`max-class-methods` and the native `max-params` both take a `max` option:
+`max-class-methods`, `max-class-dependencies`, and the native `max-params` all
+take a `max` option:
 
 ```js
 rules: {
   ...elegant.configs.recommended.rules,
   'elegant/max-class-methods': ['warn', { max: 15 }],
+  'elegant/max-class-dependencies': ['warn', { max: 6 }],
   'max-params': ['warn', { max: 4 }],
 }
 ```
@@ -178,6 +210,7 @@ block scoped to your spec globs:
   rules: {
     'elegant/no-boolean-param': 'off',
     'elegant/max-class-methods': 'off',
+    'elegant/max-class-dependencies': 'off',
     'max-params': 'off',
   },
 }
@@ -196,6 +229,7 @@ This plugin is a TypeScript adaptation of [Elegant Objects](https://www.eleganto
 (Yegor Bugayenko) and [qulice](https://github.com/yegor256/qulice) — the Java
 quality enforcer that codifies those principles on top of Checkstyle and PMD.
 Rules such as `no-logic-in-constructor` (qulice's `ConstructorsCodeFreeCheck`),
+`max-class-dependencies` (Checkstyle's `ClassDataAbstractionCoupling`),
 `no-null`, `no-getters-setters`, and `no-static-members` are ports of that
 philosophy. The concepts are reimplemented from scratch against the TypeScript
 AST; no qulice code is used.
