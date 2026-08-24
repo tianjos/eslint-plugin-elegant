@@ -85,6 +85,7 @@ The `recommended` config enables every custom rule plus the native
 | `elegant/no-instanceof`                | custom | Use of the `instanceof` operator                                                | `error`       |
 | `elegant/no-static-members`            | custom | Static methods, properties, accessors, and blocks (`allowReadonly` to permit constants) | `error` |
 | `elegant/no-null`                      | custom | The `null` literal as a value (type annotations and direct `return null` excepted) | `error`     |
+| `elegant/no-comments-in-function-body` | custom | Comments inside function bodies (directives and empty blocks excepted)          | `error`       |
 | `max-params`                           | native | Functions declaring more than `max` parameters                                  | `warn` (max 3) |
 
 ### Rule details
@@ -215,6 +216,41 @@ or `undefined`. `null` in type positions (`string | null`) and a direct
 flag idioms like `JSON.stringify(x, null, 2)` — relax it in the files where you
 interoperate with null-based APIs.
 
+#### `no-comments-in-function-body`
+
+A comment inside a body is usually a name that never got written: it labels a
+run of statements that wanted to be its own function. Move the explanation to a
+docblock above the function, or extract what it describes and let the call read
+as the sentence the comment was trying to be.
+
+Applies to every function with a block body — methods, constructors, function
+declarations, and arrow functions. Comments outside a body are untouched, so
+docblocks, module-level notes, and comments between class members are fine. Each
+comment is attributed to the innermost function containing it, so one in a
+nested arrow is reported once, against that arrow.
+
+Two things are never reported:
+
+- **Directives**, which the toolchain reads rather than a human:
+  `eslint-disable*`, `@ts-expect-error`, `@ts-ignore`, `prettier-ignore`,
+  `istanbul ignore`, `c8 ignore`, `v8 ignore`, `webpackChunkName`,
+  `@vite-ignore`. Extend the list with `{ allow: string[] }` for project
+  conventions such as `@codegen`.
+- **Comments alone in an empty block**, where there is no code to name and the
+  comment is the only thing explaining the silence. The check looks at the
+  innermost block, not the function, so an empty `catch` keeps its note even
+  inside a busy function:
+
+```ts
+function run(): void {
+  try {
+    go();
+  } catch {
+    // the failure is expected here
+  }
+}
+```
+
 ## Configuration
 
 ### Overriding thresholds
@@ -245,6 +281,7 @@ block scoped to your spec globs:
     'elegant/max-class-methods': 'off',
     'elegant/max-class-dependencies': 'off',
     'elegant/max-class-fields': 'off',
+    'elegant/no-comments-in-function-body': 'off',
     'max-params': 'off',
   },
 }
@@ -265,7 +302,8 @@ quality enforcer that codifies those principles on top of Checkstyle and PMD.
 Rules such as `no-logic-in-constructor` (qulice's `ConstructorsCodeFreeCheck`),
 `max-class-dependencies` (Checkstyle's `ClassDataAbstractionCoupling`),
 `max-class-fields` (PMD's `TooManyFields`),
-`no-null`, `no-getters-setters`, and `no-static-members` are ports of that
+`no-comments-in-function-body` (`MethodBodyCommentsCheck`), `no-null`,
+`no-getters-setters`, and `no-static-members` are ports of that
 philosophy. The concepts are reimplemented from scratch against the TypeScript
 AST; no qulice code is used.
 

@@ -3,6 +3,7 @@ import maxClassDependencies from './rules/max-class-dependencies';
 import maxClassFields from './rules/max-class-fields';
 import maxClassMethods from './rules/max-class-methods';
 import noBooleanParam from './rules/no-boolean-param';
+import noCommentsInFunctionBody from './rules/no-comments-in-function-body';
 import noGettersSetters from './rules/no-getters-setters';
 import noInstanceof from './rules/no-instanceof';
 import noLogicInConstructor from './rules/no-logic-in-constructor';
@@ -30,6 +31,7 @@ const rules = {
   'no-instanceof': noInstanceof,
   'no-static-members': noStaticMembers,
   'no-null': noNull,
+  'no-comments-in-function-body': noCommentsInFunctionBody,
 };
 
 type Plugin = {
@@ -66,6 +68,7 @@ plugin.configs.recommended = {
     'elegant/no-instanceof': 'error',
     'elegant/no-static-members': 'error',
     'elegant/no-null': 'error',
+    'elegant/no-comments-in-function-body': 'error',
     'max-params': ['warn', { max: 3 }],
   },
 };

@@ -35,6 +35,7 @@ export default [
       'elegant/max-class-methods': 'off',
       'elegant/max-class-dependencies': 'off',
       'elegant/max-class-fields': 'off',
+      'elegant/no-comments-in-function-body': 'off',
       'max-params': 'off',
     },
   },
