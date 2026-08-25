@@ -8,6 +8,11 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Lets the runner mint the short-lived OIDC token npm exchanges for
+      # publish rights. This is what replaces NPM_TOKEN.
+      id-token: write
     steps:
       - uses: actions/checkout@v7
 
@@ -17,11 +22,15 @@ jobs:
           registry-url: https://registry.npmjs.org
           cache: npm
 
+      # Trusted publishing needs npm 11.5.1+, newer than the CLI bundled with
+      # Node 20.
+      - run: npm install -g npm@latest
+
       - run: npm ci
       - run: npm run build
       - run: npm test
       # build + test already ran above, so skip the prepublishOnly hook (which
       # would repeat them). dist/ is built and shipped via the "files" field.
+      # No NODE_AUTH_TOKEN: npm authenticates through OIDC and attaches
+      # provenance on its own.
       - run: npm publish --ignore-scripts
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
