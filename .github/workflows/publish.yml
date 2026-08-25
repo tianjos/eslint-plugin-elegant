@@ -37,9 +37,7 @@ jobs:
       - run: npm test
       # build + test already ran above, so skip the prepublishOnly hook (which
       # would repeat them). dist/ is built and shipped via the "files" field.
-      # npm tries its OIDC identity first and falls back to the token, so both
-      # are wired: the token publishes today, and the moment the trusted
-      # publisher registration matches, OIDC takes over with nothing to change.
+      # Authenticates through OIDC: no token, nothing to expire, no 2FA
+      # prompt. Requires the trusted publisher registration on npmjs.com to
+      # name this repository and this workflow file.
       - run: npm publish --ignore-scripts --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
