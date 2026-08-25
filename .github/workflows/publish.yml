@@ -28,6 +28,10 @@ jobs:
       # broke this job once.
       - run: npm install -g npm@11
 
+      # Trusted publishing needs npm 11.5.1+ and Node 22.14+; print both so a
+      # silent fallback to token auth is diagnosable from the log.
+      - run: node --version && npm --version
+
       - run: npm ci
       - run: npm run build
       - run: npm test
@@ -35,4 +39,4 @@ jobs:
       # would repeat them). dist/ is built and shipped via the "files" field.
       # No NODE_AUTH_TOKEN: npm authenticates through OIDC and attaches
       # provenance on its own.
-      - run: npm publish --ignore-scripts
+      - run: npm publish --ignore-scripts --provenance
