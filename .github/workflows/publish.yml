@@ -19,11 +19,8 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 22
+          registry-url: https://registry.npmjs.org
           cache: npm
-          # No registry-url on purpose: it writes an .npmrc pinning
-          # _authToken to NODE_AUTH_TOKEN, which now expands to nothing, and
-          # npm was using that empty credential instead of the OIDC exchange.
-          # The default registry is registry.npmjs.org either way.
 
       # Trusted publishing needs npm 11.5.1+, newer than the CLI Node 22
       # bundles. Pinned to the major on purpose: npm@latest is 12.x, which
@@ -40,6 +37,9 @@ jobs:
       - run: npm test
       # build + test already ran above, so skip the prepublishOnly hook (which
       # would repeat them). dist/ is built and shipped via the "files" field.
-      # No NODE_AUTH_TOKEN: npm authenticates through OIDC and attaches
-      # provenance on its own.
+      # npm tries its OIDC identity first and falls back to the token, so both
+      # are wired: the token publishes today, and the moment the trusted
+      # publisher registration matches, OIDC takes over with nothing to change.
       - run: npm publish --ignore-scripts --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
