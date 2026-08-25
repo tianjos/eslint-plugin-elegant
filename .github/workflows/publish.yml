@@ -19,8 +19,11 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 22
-          registry-url: https://registry.npmjs.org
           cache: npm
+          # No registry-url on purpose: it writes an .npmrc pinning
+          # _authToken to NODE_AUTH_TOKEN, which now expands to nothing, and
+          # npm was using that empty credential instead of the OIDC exchange.
+          # The default registry is registry.npmjs.org either way.
 
       # Trusted publishing needs npm 11.5.1+, newer than the CLI Node 22
       # bundles. Pinned to the major on purpose: npm@latest is 12.x, which
