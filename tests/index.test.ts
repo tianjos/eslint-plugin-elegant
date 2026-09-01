@@ -29,6 +29,21 @@ describe('plugin surface', () => {
     ).toEqual(['error', { minMembers: 2 }]);
   });
 
+  it('warns past fifty lines in one method by default', () => {
+    expect(
+      plugin.configs.recommended.rules?.['elegant/max-method-lines'],
+    ).toEqual(['warn', { max: 50 }]);
+  });
+
+  it('errors on self-mutation and generic errors by default', () => {
+    expect(plugin.configs.recommended.rules?.['elegant/no-self-mutation']).toBe(
+      'error',
+    );
+    expect(plugin.configs.recommended.rules?.['elegant/no-generic-error']).toBe(
+      'error',
+    );
+  });
+
   it('enables every rule in the recommended config', () => {
     for (const name of Object.keys(plugin.rules)) {
       expect(plugin.configs.recommended.rules).toHaveProperty(

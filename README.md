@@ -93,6 +93,9 @@ The `recommended` config enables every custom rule plus two native ones,
 | `elegant/no-property-alias`            | custom | Locals that only rename a property of an object already in hand                 | `error`       |
 | `elegant/no-property-destructuring`    | custom | Destructuring an object already in hand into locals                             | `error`       |
 | `elegant/no-anonymous-param-type`      | custom | Parameters typed as an anonymous shape of `minMembers` or more properties        | `error` (minMembers 2) |
+| `elegant/no-self-mutation`             | custom | Writing to your own fields outside the constructor                              | `error`       |
+| `elegant/no-generic-error`             | custom | `throw new Error(...)` and the other built-in error types                       | `error`       |
+| `elegant/max-method-lines`             | custom | Named functions and methods longer than `max` lines                             | `warn` (max 50) |
 | `max-params`                           | native | Functions declaring more than `max` parameters                                  | `warn` (max 3) |
 | `no-else-return`                       | native | An `else` branch when the `then` branch always returns (`allowElseIf: false`)   | `error`       |
 
@@ -183,7 +186,18 @@ throw.
 #### `no-public-mutable-props`
 
 Public state should be `readonly` so callers cannot break an aggregate's
-invariants. `private`/`protected` members and `readonly` members are allowed.
+invariants. A declared `private`/`protected` field is allowed, and so is any
+`readonly` member.
+
+Constructor parameter properties are covered at **every** visibility by
+default, which declared fields are not: a `private repo: Repository<Proposal>`
+that nobody marked `readonly` can still be swapped from inside, and unlike a
+declared field it is a collaborator the container handed you. Set
+`{ parameterProperties: 'public' }` to keep the rule to what its name says.
+
+This rule asks whether a field is *declared* changeable. Its behavioural
+counterpart is `no-self-mutation`, which asks whether anything actually
+changes it.
 
 #### `no-logic-in-constructor`
 
@@ -553,6 +567,80 @@ hold those to the same standard.
 Unlike its neighbours, this rule does not have a mechanical fix: it asks you to
 introduce a named type and decide where it lives. That is a design change, so
 expect adoption to cost more than a find-and-replace.
+
+#### `no-self-mutation`
+
+`no-public-mutable-props` asks whether a field is *declared* changeable. This
+asks whether anything actually changes it. A write to `this.something` after
+the constructor has returned means the object is not a value anyone can hold
+with confidence: whoever received it a moment ago is now holding something
+else.
+
+```ts
+// reported — each one is a lifecycle, not a value
+this.accessToken = access_token;
+this.isPolling = false;
+this.filterOptionsCache = options;
+this.snsClient = new SNSClient({});
+
+// passes — this is where an object is built
+constructor(private readonly token: string) {
+  this.expiresAt = expiry(token);
+}
+```
+
+Compound assignment (`this.count += 1`) and increment (`this.count++`) are
+writes too. A computed write (`this[key] = value`) names no field and is left
+alone. Writing to *another* object (`box.value = v`) is that object's business.
+
+A callback the constructor schedules is **not** construction — it runs after
+the constructor returned, so `setTimeout(() => { this.token = load(); })`
+inside a constructor is reported.
+
+Nest calls `onModuleInit`, `onApplicationBootstrap`, `onModuleDestroy`,
+`beforeApplicationShutdown` and `onApplicationShutdown` after the container has
+built the instance, finishing a construction the constructor could not — a
+timer needs a running event loop. Those five are allowed by default, and the
+list is the `{ allowedMethods: string[] }` option; pass `[]` to hold them to
+the same standard, or add your own.
+
+#### `no-generic-error`
+
+`throw new Error('RETRY_BATCH_QUEUE_URL not configured')` describes the failure
+only in a string the thrower is free to reword. A caller that wants to handle
+that case specifically has nothing to catch but `Error`, which every other
+failure also is, so it ends up matching on the message.
+
+```ts
+// reported
+throw new Error('origin codes are required');
+throw new TypeError('not a number');
+
+// passes
+throw new MissingOriginCodes();
+throw new ProposalNotFound(id);
+throw error;                     // rethrow keeps whatever it was
+throw invalidRow(raw);           // a factory decides which exception to build
+```
+
+Covers the eight built-in error types (`Error`, `TypeError`, `RangeError`,
+`ReferenceError`, `SyntaxError`, `EvalError`, `URIError`, `AggregateError`).
+A subclass is a named exception and passes — that is the whole point. Only
+`throw` is examined: building an `Error` to hand to `Promise.reject` or a
+callback is a different question and belongs to a different rule.
+
+#### `max-method-lines`
+
+A port of Checkstyle's `MethodLength`, which qulice runs. Measured from the
+signature to the closing brace, so the declaration and the blank lines that
+separate the body's paragraphs count — they are part of what a reader has to
+hold.
+
+Named units are measured: methods, function declarations, and a function or
+arrow bound to a `const`. An inline callback is **not** measured on its own,
+because a long callback already makes its host long and the host is what gets
+reported. Configurable via `{ max: number }` (default `50`), and a `warn`
+rather than an `error`, like the other thresholds.
 
 ## Configuration
 

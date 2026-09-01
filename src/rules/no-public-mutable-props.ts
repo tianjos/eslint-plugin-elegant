@@ -1,6 +1,7 @@
 import { AST_NODE_TYPES, TSESTree } from '@typescript-eslint/utils';
 import { createRule } from '../utils/createRule';
 
+type Options = [{ parameterProperties: 'public' | 'all' }];
 type MessageIds = 'mutableProp';
 
 const isHidden = (
@@ -20,14 +21,20 @@ const keyName = (
 };
 
 /**
- * A constructor parameter property the outside world can write to. Only
- * constructor parameter properties carry an accessibility modifier, so reading
- * one is enough to know the field is public.
+ * A constructor parameter property that can be written to. At `'all'` the
+ * visibility stops mattering: a `private` collaborator nobody marked readonly
+ * can still be swapped from inside, which is the same defect one wall further
+ * in. A parameter property with no modifier at all declares no field.
  */
-const isPublicMutable = (node: TSESTree.TSParameterProperty): boolean =>
-  node.accessibility === 'public' && !node.readonly;
+const isMutable = (
+  node: TSESTree.TSParameterProperty,
+  scope: Options[0]['parameterProperties'],
+): boolean =>
+  !node.readonly &&
+  node.accessibility !== undefined &&
+  (scope === 'all' || node.accessibility === 'public');
 
-export default createRule<[], MessageIds>({
+export default createRule<Options, MessageIds>({
   name: 'no-public-mutable-props',
   meta: {
     type: 'suggestion',
@@ -37,12 +44,20 @@ export default createRule<[], MessageIds>({
     },
     messages: {
       mutableProp:
-        "Public property '{{name}}' is mutable. Make it readonly or expose it through a method that protects the invariant.",
+        "Property '{{name}}' is mutable. Make it readonly or expose it through a method that protects the invariant.",
     },
-    schema: [],
+    schema: [
+      {
+        type: 'object',
+        properties: {
+          parameterProperties: { type: 'string', enum: ['public', 'all'] },
+        },
+        additionalProperties: false,
+      },
+    ],
   },
-  defaultOptions: [],
-  create(context) {
+  defaultOptions: [{ parameterProperties: 'all' }],
+  create(context, [{ parameterProperties }]) {
     return {
       PropertyDefinition(node): void {
         if (node.readonly || isHidden(node.accessibility)) {
@@ -55,7 +70,7 @@ export default createRule<[], MessageIds>({
         });
       },
       TSParameterProperty(node): void {
-        if (!isPublicMutable(node)) {
+        if (!isMutable(node, parameterProperties)) {
           return;
         }
         const target =
