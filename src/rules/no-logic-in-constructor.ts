@@ -62,23 +62,22 @@ export default createRule<[], MessageIds>({
           continue;
         }
 
-        const { expression } = statement;
-        if (isSuperCall(expression)) {
+        if (isSuperCall(statement.expression)) {
           continue;
         }
 
         if (
-          expression.type !== AST_NODE_TYPES.AssignmentExpression ||
-          expression.operator !== '=' ||
-          !isThisMember(expression.left)
+          statement.expression.type !== AST_NODE_TYPES.AssignmentExpression ||
+          statement.expression.operator !== '=' ||
+          !isThisMember(statement.expression.left)
         ) {
           context.report({ node: statement, messageId: 'statement' });
           continue;
         }
 
-        if (!isPlainValue(expression.right)) {
+        if (!isPlainValue(statement.expression.right)) {
           context.report({
-            node: expression.right,
+            node: statement.expression.right,
             messageId: 'computation',
           });
         }

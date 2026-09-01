@@ -3,6 +3,15 @@ import { createRule } from '../utils/createRule';
 
 type MessageIds = 'noNull';
 
+/**
+ * A `null` sitting directly in a `return`. That shape is the domain of
+ * `no-null-return`, which reports it with its own message; reporting it here
+ * too would double up on one line of code.
+ */
+const isDirectReturn = (node: TSESTree.Literal): boolean =>
+  node.parent.type === AST_NODE_TYPES.ReturnStatement &&
+  node.parent.argument === node;
+
 export default createRule<[], MessageIds>({
   name: 'no-null',
   meta: {
@@ -24,14 +33,11 @@ export default createRule<[], MessageIds>({
         if (node.value !== null || node.raw !== 'null') {
           return;
         }
-        // Direct `return null;` is the domain of `no-null-return`.
-        const { parent } = node;
-        if (
-          parent.type === AST_NODE_TYPES.ReturnStatement &&
-          parent.argument === node
-        ) {
+
+        if (isDirectReturn(node)) {
           return;
         }
+
         context.report({ node, messageId: 'noNull' });
       },
     };

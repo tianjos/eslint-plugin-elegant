@@ -42,13 +42,10 @@ export default createRule<Options, MessageIds>({
           return;
         }
 
-        const classNode = node.parent as
-          | TSESTree.ClassDeclaration
-          | TSESTree.ClassExpression;
-        const name = classNode.id?.name ?? '(anonymous)';
+        const name = node.parent.id?.name ?? '(anonymous)';
 
         context.report({
-          node: classNode.id ?? node,
+          node: node.parent.id ?? node,
           messageId: 'tooManyMethods',
           data: { name, count: methods.length, max },
         });

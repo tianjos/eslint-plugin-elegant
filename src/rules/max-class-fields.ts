@@ -23,21 +23,25 @@ const named = (
 ): string =>
   key.type === AST_NODE_TYPES.Identifier ? key.name : sourceCode.getText(key);
 
-/**
- * Properties declared in the class body. A decorated one is skipped by default:
- * `@Column`, `@IsString` and friends map a field to a table or a payload, which
- * is framework shape rather than state the class chose to carry.
- */
+/** Every property declared in the class body. */
 const declared = (
   member: TSESTree.ClassElement,
   sourceCode: TSESLint.SourceCode,
-  ignoreDecorated: boolean,
 ): string[] =>
-  isField(member) &&
-  !member.static &&
-  !(ignoreDecorated && member.decorators.length > 0)
-    ? [named(member.key, sourceCode)]
-    : [];
+  isField(member) && !member.static ? [named(member.key, sourceCode)] : [];
+
+/**
+ * The same, minus the decorated ones: `@Column`, `@IsString` and friends map a
+ * field to a table or a payload, which is framework shape rather than state the
+ * class chose to carry.
+ */
+const declaredUndecorated = (
+  member: TSESTree.ClassElement,
+  sourceCode: TSESLint.SourceCode,
+): string[] =>
+  isField(member) && member.decorators.length > 0
+    ? []
+    : declared(member, sourceCode);
 
 /**
  * Constructor parameter properties. `ignoreDecorated` deliberately does not
@@ -88,11 +92,12 @@ export default createRule<Options, MessageIds>({
   defaultOptions: [{ max: DEFAULT_MAX, ignoreDecorated: true }],
   create(context, [{ max, ignoreDecorated }]) {
     const sourceCode = context.sourceCode;
+    const fieldsOf = ignoreDecorated ? declaredUndecorated : declared;
 
     return {
       ClassBody(node): void {
         const fields = node.body.flatMap((member) => [
-          ...declared(member, sourceCode, ignoreDecorated),
+          ...fieldsOf(member, sourceCode),
           ...promoted(member, sourceCode),
         ]);
 
@@ -100,15 +105,11 @@ export default createRule<Options, MessageIds>({
           return;
         }
 
-        const classNode = node.parent as
-          | TSESTree.ClassDeclaration
-          | TSESTree.ClassExpression;
-
         context.report({
-          node: classNode.id ?? node,
+          node: node.parent.id ?? node,
           messageId: 'tooManyFields',
           data: {
-            name: classNode.id?.name ?? '(anonymous)',
+            name: node.parent.id?.name ?? '(anonymous)',
             count: fields.length,
             max,
             names: fields.join(', '),

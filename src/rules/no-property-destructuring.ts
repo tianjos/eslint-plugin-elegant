@@ -45,12 +45,10 @@ export default createRule<[], MessageIds>({
   create(context) {
     return {
       ObjectPattern(node): void {
-        const declarator = node.parent;
-
         if (
-          declarator.type !== AST_NODE_TYPES.VariableDeclarator ||
-          declarator.init === null ||
-          !isObjectInHand(declarator.init)
+          node.parent.type !== AST_NODE_TYPES.VariableDeclarator ||
+          node.parent.init === null ||
+          !isObjectInHand(node.parent.init)
         ) {
           return;
         }
@@ -59,7 +57,7 @@ export default createRule<[], MessageIds>({
           return;
         }
 
-        const variables = context.sourceCode.getDeclaredVariables(declarator);
+        const variables = context.sourceCode.getDeclaredVariables(node.parent);
 
         if (
           variables.some(
@@ -71,10 +69,10 @@ export default createRule<[], MessageIds>({
         }
 
         context.report({
-          node: declarator,
+          node: node.parent,
           messageId: 'destructuresObject',
           data: {
-            name: context.sourceCode.getText(declarator.init),
+            name: context.sourceCode.getText(node.parent.init),
             count: node.properties.length,
           },
         });

@@ -19,6 +19,10 @@ import noPublicMutableProps from './rules/no-public-mutable-props';
 import noStaticMembers from './rules/no-static-members';
 import noTypeAssertion from './rules/no-type-assertion';
 
+// require() of a JSON file yields `any`, so there is no honest type to reach
+// for here. Importing it instead would put package.json inside the emitted
+// tree and move dist/index.js, which the "exports" map pins.
+// eslint-disable-next-line elegant/no-type-assertion
 const { name, version } = require('../package.json') as {
   name: string;
   version: string;

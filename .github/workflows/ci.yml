@@ -18,4 +18,10 @@ jobs:
 
       - run: npm ci
       - run: npm run build
+
+      # The plugin held to its own recommended config. Fails on errors only:
+      # the max-* rules ship as warnings because a threshold is a judgement,
+      # and a judgement should not block a merge.
+      - run: npx eslint .
+
       - run: npm test

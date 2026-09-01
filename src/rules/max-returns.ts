@@ -21,23 +21,21 @@ const nameOf = (node: FunctionLike): string => {
     return node.id.name;
   }
 
-  const parent = node.parent;
-
   if (
-    (parent.type === AST_NODE_TYPES.MethodDefinition ||
-      parent.type === AST_NODE_TYPES.PropertyDefinition ||
-      parent.type === AST_NODE_TYPES.Property) &&
-    !parent.computed &&
-    parent.key.type === AST_NODE_TYPES.Identifier
+    (node.parent.type === AST_NODE_TYPES.MethodDefinition ||
+      node.parent.type === AST_NODE_TYPES.PropertyDefinition ||
+      node.parent.type === AST_NODE_TYPES.Property) &&
+    !node.parent.computed &&
+    node.parent.key.type === AST_NODE_TYPES.Identifier
   ) {
-    return parent.key.name;
+    return node.parent.key.name;
   }
 
   if (
-    parent.type === AST_NODE_TYPES.VariableDeclarator &&
-    parent.id.type === AST_NODE_TYPES.Identifier
+    node.parent.type === AST_NODE_TYPES.VariableDeclarator &&
+    node.parent.id.type === AST_NODE_TYPES.Identifier
   ) {
-    return parent.id.name;
+    return node.parent.id.name;
   }
 
   return '(anonymous)';
@@ -84,15 +82,15 @@ export default createRule<Options, MessageIds>({
         return;
       }
 
-      const { node, count } = scope;
-      const signature = node.id ?? sourceCode.getFirstToken(node);
+      const signature =
+        scope.node.id ?? sourceCode.getFirstToken(scope.node);
 
       context.report({
-        loc: (signature ?? node).loc,
+        loc: (signature ?? scope.node).loc,
         messageId: 'tooManyReturns',
         data: {
-          name: nameOf(node),
-          count,
+          name: nameOf(scope.node),
+          count: scope.count,
           max,
         },
       });

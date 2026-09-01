@@ -66,10 +66,13 @@ const instantiated = (
   sourceCode: TSESLint.SourceCode,
 ): Dependency => {
   const root = sourceCode.getText(node.callee);
-  const args = node.typeArguments;
 
   return {
-    key: `${root}${args === undefined ? '' : sourceCode.getText(args)}`,
+    key: `${root}${
+      node.typeArguments === undefined
+        ? ''
+        : sourceCode.getText(node.typeArguments)
+    }`,
     root,
   };
 };
@@ -137,15 +140,11 @@ export default createRule<Options, MessageIds>({
           return;
         }
 
-        const classNode = node.parent as
-          | TSESTree.ClassDeclaration
-          | TSESTree.ClassExpression;
-
         context.report({
-          node: classNode.id ?? node,
+          node: node.parent.id ?? node,
           messageId: 'tooManyDependencies',
           data: {
-            name: classNode.id?.name ?? '(anonymous)',
+            name: node.parent.id?.name ?? '(anonymous)',
             count: dependencies.size,
             max,
             names: [...dependencies].join(', '),
