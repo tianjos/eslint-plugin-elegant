@@ -19,6 +19,14 @@ const keyName = (
   return 'property';
 };
 
+/**
+ * A constructor parameter property the outside world can write to. Only
+ * constructor parameter properties carry an accessibility modifier, so reading
+ * one is enough to know the field is public.
+ */
+const isPublicMutable = (node: TSESTree.TSParameterProperty): boolean =>
+  node.accessibility === 'public' && !node.readonly;
+
 export default createRule<[], MessageIds>({
   name: 'no-public-mutable-props',
   meta: {
@@ -47,11 +55,7 @@ export default createRule<[], MessageIds>({
         });
       },
       TSParameterProperty(node): void {
-        // Only constructor parameter properties carry an accessibility modifier.
-        if (
-          node.accessibility !== 'public' ||
-          node.readonly
-        ) {
+        if (!isPublicMutable(node)) {
           return;
         }
         const target =

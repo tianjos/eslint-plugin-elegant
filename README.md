@@ -90,6 +90,9 @@ The `recommended` config enables every custom rule plus two native ones,
 | `elegant/no-else-after-throw`          | custom | An `else` branch when the `then` branch always throws                           | `error`       |
 | `elegant/no-interpolated-log-message`  | custom | Log messages built by interpolation or concatenation                            | `error`       |
 | `elegant/max-returns`                  | custom | Functions returning from more places than `max`                                 | `warn` (max 3) |
+| `elegant/no-property-alias`            | custom | Locals that only rename a property of an object already in hand                 | `error`       |
+| `elegant/no-property-destructuring`    | custom | Destructuring an object already in hand into locals                             | `error`       |
+| `elegant/no-anonymous-param-type`      | custom | Parameters typed as an anonymous shape of `minMembers` or more properties        | `error` (minMembers 2) |
 | `max-params`                           | native | Functions declaring more than `max` parameters                                  | `warn` (max 3) |
 | `no-else-return`                       | native | An `else` branch when the `then` branch always returns (`allowElseIf: false`)   | `error`       |
 
@@ -370,6 +373,148 @@ Functions are reported by the name that binds them — a declaration's own, a
 method's key, or the `const` or class field holding an arrow — falling back to
 `(anonymous)` for an inline callback. Configurable via `{ max: number }`
 (default `3`).
+
+#### `no-property-alias`
+
+A local whose whole job is to hold `obj.status` is a second name for state the
+object already exposes under a name of its own. It buys nothing and it costs a
+reader the hop of proving the two are the same value. Ask the object where you
+need the answer.
+
+```ts
+// reported
+const objStatus = obj.status;
+const authHeader = request.headers.authorization;
+const region = this.cognitoRegion;
+
+// passes
+obj.status;
+request.headers.authorization;
+this.cognitoRegion;
+```
+
+Only variable declarations are reported. `this.total = other.total` transfers
+state rather than aliasing it, and a property in an object literal
+(`{ id: dto.id }`) is how mappers are written; neither trips the rule.
+
+Four shapes are never reported, because in each of them the local is doing real
+work:
+
+- **A reassigned local.** `let status = obj.status` followed by
+  `status = 'EXPIRED'` holds mutable state that no member access stands in for.
+- **A local read inside a nested function.** TypeScript drops a narrowing of
+  `obj.prop` at the callback boundary but keeps it on a local, so inlining such
+  a declaration stops compiling:
+
+  ```ts
+  const status = obj.status;
+  if (status === undefined) return [];
+  return obj.items.map((n) => n + status.length); // needs the local
+  ```
+
+- **A chain that is not a plain run of `.prop` accesses.** A computed link
+  (`repo.save.mock.calls[1][0].metadata`) or a call in the middle
+  (`resolveDates(query).startDate`) is not a property of an object in hand, and
+  repeating it reads worse than naming it.
+- **An environment read.** `const topicArn = process.env.SNS_ERROR_TOPIC`
+  followed by a guard is fail-fast, and inlining it would read the environment
+  twice. Set `{ allowEnv: false }` to hold these to the same standard.
+
+Its sibling `no-property-destructuring` covers the same reach-in written as a
+pattern; together they say one thing, which is to ask the object.
+
+This rule is the mirror image of ESLint's native
+[`prefer-destructuring`](https://eslint.org/docs/latest/rules/prefer-destructuring),
+which reports `const status = obj.status` and asks you to write
+`const { status } = obj` instead. The two cannot both be on. `prefer-destructuring`
+is off by default, so there is nothing to undo unless you enabled it — and note
+that it only fires when the local and the property share a name, leaving the
+renaming majority (`const objStatus = obj.status`) unreported either way.
+
+#### `no-property-destructuring`
+
+`const { status, enabled } = obj` is `no-property-alias` written as a pattern:
+the object already names its own state, and the locals are a second set of
+names for it. This rule covers the pattern form, and only when the thing being
+destructured is an object you already hold — a name, `this`, or a run of plain
+`.prop` accesses rooted at one of those.
+
+```ts
+// reported
+const { status, enabled } = obj;
+const { access_token, expires_in } = response.data;
+const { region, poolId } = this.config;
+
+// passes — none of these was an object in hand
+function create({ id, name }) {}
+for (const { id, total } of rows) {}
+const { csvContent } = await service.exportCsv(query);
+const { startDate } = resolveDates(query);
+const [rows, total] = await repo.findAndCount();
+```
+
+Parameter patterns, loop bindings, and `catch` bindings are how you receive a
+value rather than reach into one, so they never come up. Neither does
+`ArrayPattern`: `const [rows, total] = ...` names the halves of a tuple that
+carries no names of its own.
+
+Four shapes are never reported, because in each of them the pattern is doing
+work no member access does:
+
+- **A rest element.** `const { authorization: _auth, ...safe } = headers`
+  constructs a new object by omission. There is nothing to inline it into.
+- **A default value.** `const { max = 3 } = options` inlines to
+  `options.max ?? 3`, repeating the fallback at every use site.
+- **A local read inside a nested function**, for the narrowing reason spelled
+  out under `no-property-alias`.
+- **A local reassigned later.** `let { status } = obj` followed by
+  `status = 'EXPIRED'` holds mutable state of its own.
+
+Renaming on the way out (`const { ingestion: failure } = row`) is still
+copying, and so is a single property. Width makes no difference: a pattern
+pulling four fields off an `input` is usually the sign that the method wanted
+the object, not the fields.
+
+#### `no-anonymous-param-type`
+
+`max-params` and `no-boolean-param` both push you towards an options object —
+and an options object typed inline is a bag that got away with it. The
+parameter count went down, the coupling did not, and the shape has nowhere to
+grow behaviour. Give it a name and it can become a value object; leave it
+anonymous and it stays a struct.
+
+```ts
+// reported
+private toResponse(group: { id: string; name: string; members: number }) {}
+async createFundingProducts(data: { originCode: string; productId: string }) {}
+chart(rows: Array<{ day: string; count: string }>) {}
+constructor(private readonly config: { host: string; port: number }) {}
+
+// passes
+async register(input: RegisterProposal) {}
+function charge(amount: number, currency: string) {}
+ingest(raw: Record<string, unknown>) {}
+```
+
+A shape counts wherever it hides in the annotation — on its own, in a union
+with `null`, intersected onto a named type, in an array, or inside a generic
+argument such as `Array<{ … }>`. A parameter is reported once however many
+shapes it holds, and each offending parameter is reported separately.
+Destructuring in the signature (`function create({ id }: { id: string })`)
+does not hide the bag, and neither does a default value.
+
+**Inline callbacks are never reported.** `res.body.items.map((i: { ccbNumber: string; total: number }) => i.total)`
+annotates whatever the callee yields; when that value has no type to borrow, an
+inline shape is the only way to type it at all.
+
+Configurable via `{ minMembers: number }` (default `2`). At the default, a
+one-property parameter like `opts?: { required?: boolean }` passes — naming a
+single field is usually ceremony rather than design. Set `minMembers: 1` to
+hold those to the same standard.
+
+Unlike its neighbours, this rule does not have a mechanical fix: it asks you to
+introduce a named type and decide where it lives. That is a design change, so
+expect adoption to cost more than a find-and-replace.
 
 ## Configuration
 

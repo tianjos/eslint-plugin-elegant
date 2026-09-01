@@ -82,18 +82,16 @@ export default createRule<Options, MessageIds>({
 
     return {
       CallExpression(node): void {
-        const callee = node.callee;
-
         if (
-          callee.type !== AST_NODE_TYPES.MemberExpression ||
-          callee.computed ||
-          callee.property.type !== AST_NODE_TYPES.Identifier ||
-          !levels.has(callee.property.name)
+          node.callee.type !== AST_NODE_TYPES.MemberExpression ||
+          node.callee.computed ||
+          node.callee.property.type !== AST_NODE_TYPES.Identifier ||
+          !levels.has(node.callee.property.name)
         ) {
           return;
         }
 
-        const name = receiver(callee.object);
+        const name = receiver(node.callee.object);
 
         if (name === undefined || !logging.has(name)) {
           return;

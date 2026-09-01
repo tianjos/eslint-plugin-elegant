@@ -1,4 +1,5 @@
 import type { TSESLint } from '@typescript-eslint/utils';
+import noAnonymousParamType from './rules/no-anonymous-param-type';
 import maxClassDependencies from './rules/max-class-dependencies';
 import maxClassFields from './rules/max-class-fields';
 import maxReturns from './rules/max-returns';
@@ -12,10 +13,16 @@ import noInterpolatedLogMessage from './rules/no-interpolated-log-message';
 import noLogicInConstructor from './rules/no-logic-in-constructor';
 import noNull from './rules/no-null';
 import noNullReturn from './rules/no-null-return';
+import noPropertyAlias from './rules/no-property-alias';
+import noPropertyDestructuring from './rules/no-property-destructuring';
 import noPublicMutableProps from './rules/no-public-mutable-props';
 import noStaticMembers from './rules/no-static-members';
 import noTypeAssertion from './rules/no-type-assertion';
 
+// require() of a JSON file yields `any`, so there is no honest type to reach
+// for here. Importing it instead would put package.json inside the emitted
+// tree and move dist/index.js, which the "exports" map pins.
+// eslint-disable-next-line elegant/no-type-assertion
 const { name, version } = require('../package.json') as {
   name: string;
   version: string;
@@ -38,6 +45,9 @@ const rules = {
   'no-else-after-throw': noElseAfterThrow,
   'no-interpolated-log-message': noInterpolatedLogMessage,
   'max-returns': maxReturns,
+  'no-property-alias': noPropertyAlias,
+  'no-property-destructuring': noPropertyDestructuring,
+  'no-anonymous-param-type': noAnonymousParamType,
 };
 
 type Plugin = {
@@ -78,6 +88,9 @@ plugin.configs.recommended = {
     'elegant/no-comments-in-function-body': 'error',
     'elegant/no-else-after-throw': 'error',
     'elegant/no-interpolated-log-message': 'error',
+    'elegant/no-property-alias': 'error',
+    'elegant/no-property-destructuring': 'error',
+    'elegant/no-anonymous-param-type': ['error', { minMembers: 2 }],
     'max-params': ['warn', { max: 3 }],
     'no-else-return': ['error', { allowElseIf: false }],
   },

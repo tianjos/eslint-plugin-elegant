@@ -21,11 +21,10 @@ export default createRule<[], MessageIds>({
   create(context) {
     return {
       ReturnStatement(node): void {
-        const { argument } = node;
         if (
-          argument?.type === AST_NODE_TYPES.Literal &&
-          argument.value === null &&
-          argument.raw === 'null'
+          node.argument?.type === AST_NODE_TYPES.Literal &&
+          node.argument.value === null &&
+          node.argument.raw === 'null'
         ) {
           context.report({ node, messageId: 'noNullReturn' });
         }
