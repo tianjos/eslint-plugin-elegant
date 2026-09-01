@@ -2,6 +2,35 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.6.0](https://github.com/tianjos/eslint-plugin-elegant/compare/v0.5.0...v0.6.0) (2026-09-01)
+
+
+### Features
+
+* **rules:** let a static be a secondary constructor ([86cf1da](https://github.com/tianjos/eslint-plugin-elegant/commit/86cf1da369b9a94bd5e0728c207cb722f47a1380))
+
+`no-static-members` gains two options, **both on by default**:
+
+- `allowSelfReturning` — a static whose declared return type is the class
+  itself is a secondary constructor, which TypeScript has no other way to
+  write. `this`, `Promise<Self>` and `Self | undefined` count; `Self | null`
+  does not, because `no-null-return` already owns that shape. The return type
+  must be written down: the rule carries no type information, so an
+  unannotated `static create() { … }` stays reported.
+- `allowModuleFactories` — a static returning `DynamicModule` from a class
+  decorated with `@Module`. Both halves are required.
+
+This replaces the README's previous advice to relax the whole rule per file,
+which also permitted static state and static utilities.
+
+### Upgrading
+
+Nothing to do. Both options default to on, so upgrading only **removes**
+reports — measured across three NestJS codebases, 48 of 144 static members
+stop being flagged. Static utility classes, `private static` helpers and
+mutable static state are still reported. Set either option to `false` to keep
+the old behaviour.
+
 ## [0.5.0](https://github.com/tianjos/eslint-plugin-elegant/compare/v0.4.0...v0.5.0) (2026-09-01)
 
 
