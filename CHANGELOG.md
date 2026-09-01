@@ -2,6 +2,43 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.5.0](https://github.com/tianjos/eslint-plugin-elegant/compare/v0.4.0...v0.5.0) (2026-09-01)
+
+
+### Features
+
+* **rules:** reject reaching into an object for its state ([d73ede7](https://github.com/tianjos/eslint-plugin-elegant/commit/d73ede794cb4f328d4a34add8ff75d0c70d29231))
+
+Three rules, all enabled as `error` in `recommended`:
+
+- `no-property-alias` — a local that only renames a property, `const objStatus = obj.status`
+- `no-property-destructuring` — the same reach-in written as a pattern, `const { status } = obj`
+- `no-anonymous-param-type` — a parameter typed as an unnamed shape,
+  `toResponse(group: { id: string; name: string })`. Configurable via
+  `{ minMembers: number }` (default `2`).
+
+### Upgrading
+
+This is a minor, but spreading `configs.recommended` will surface new errors on
+existing code: measured across three NestJS codebases (~1,460 files), the three
+rules together fire about **0.18 times per file**. Nothing else changed for
+consumers — no rule was removed, retargeted, or made stricter.
+
+To adopt gradually, override the three back to `warn` (or `off`) after the
+spread and turn them on directory by directory:
+
+```js
+rules: {
+  ...elegant.configs.recommended.rules,
+  'elegant/no-property-alias': 'warn',
+  'elegant/no-property-destructuring': 'warn',
+  'elegant/no-anonymous-param-type': 'warn',
+}
+```
+
+`no-property-alias` conflicts with the native `prefer-destructuring`, which is
+off by default; if you enabled it, turn it off.
+
 ## [0.4.0](https://github.com/tianjos/eslint-plugin-elegant/compare/v0.3.2...v0.4.0) (2026-08-24)
 
 
