@@ -2,6 +2,61 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.7.0](https://github.com/tianjos/eslint-plugin-elegant/compare/v0.6.0...v0.7.0) (2026-09-01)
+
+
+### Features
+
+* **rules:** immutability by behaviour, and errors with names ([aa9f70d](https://github.com/tianjos/eslint-plugin-elegant/commit/aa9f70df37aa494c2f777107e0f870fc566991ab))
+
+Three new rules, all `error` in `recommended`, plus one option change:
+
+- `no-self-mutation` — a write to `this.something` after the constructor
+  returned. Compound assignment and increment count; a callback the
+  constructor schedules is not construction. Nest's five lifecycle hooks are
+  allowed by default via `{ allowedMethods: string[] }`.
+- `no-generic-error` — `throw new Error(...)` and the seven other built-in
+  error types. Rethrows (`throw error`) and subclasses pass.
+- `max-method-lines` — Checkstyle's `MethodLength` at `{ max: 50 }`, a `warn`.
+  Named units only; an inline callback is measured through its host.
+- `no-public-mutable-props` now covers constructor parameter properties at
+  every visibility, not only `public`. Set `{ parameterProperties: 'public' }`
+  to restore the previous reading.
+
+### Upgrading
+
+Spreading `configs.recommended` will surface new problems on existing code.
+Measured across three NestJS codebases (1,251 production files):
+
+| Rule | Reports | Severity |
+| --- | ---: | --- |
+| `max-method-lines` | 466 | `warn` |
+| `no-generic-error` | 163 | `error` |
+| `no-self-mutation` | 66 | `error` |
+| `no-public-mutable-props` (delta only) | 36 | `error` |
+
+To adopt gradually, override the three new rules to `warn` (or `off`) after
+the spread:
+
+```js
+rules: {
+  ...elegant.configs.recommended.rules,
+  'elegant/no-self-mutation': 'warn',
+  'elegant/no-generic-error': 'warn',
+  'elegant/max-method-lines': 'off',
+  'elegant/no-public-mutable-props': ['error', { parameterProperties: 'public' }],
+}
+```
+
+### Known issue
+
+`no-public-mutable-props` reports every public non-`readonly` declared field,
+including NestJS DTO fields carrying `class-validator` decorators
+(`@IsString() code: string;`). On the corpus above that is 4,472 reports, and
+it predates this release. `max-class-fields` has an `ignoreDecorated` option
+for exactly this shape; this rule has no equivalent yet. Until it does, turn
+the rule off for your DTO globs.
+
 ## [0.6.0](https://github.com/tianjos/eslint-plugin-elegant/compare/v0.5.0...v0.6.0) (2026-09-01)
 
 
