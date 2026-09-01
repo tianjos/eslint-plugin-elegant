@@ -84,7 +84,7 @@ The `recommended` config enables every custom rule plus two native ones,
 | `elegant/no-logic-in-constructor`      | custom | Any constructor code beyond `this.field = value` stores and a `super(...)` call  | `error`       |
 | `elegant/no-getters-setters`           | custom | `get`/`set` accessors (and `getX`/`setX` methods with `{ methods: true }`)        | `error`       |
 | `elegant/no-instanceof`                | custom | Use of the `instanceof` operator                                                | `error`       |
-| `elegant/no-static-members`            | custom | Static methods, properties, accessors, and blocks (`allowReadonly` to permit constants) | `error` |
+| `elegant/no-static-members`            | custom | Static methods, properties, accessors, and blocks (secondary constructors and Nest module factories excepted) | `error` |
 | `elegant/no-null`                      | custom | The `null` literal as a value (type annotations and direct `return null` excepted) | `error`     |
 | `elegant/no-comments-in-function-body` | custom | Comments inside function bodies (directives and empty blocks excepted)          | `error`       |
 | `elegant/no-else-after-throw`          | custom | An `else` branch when the `then` branch always throws                           | `error`       |
@@ -212,8 +212,46 @@ the codebase.
 Static state and behavior cannot be injected, substituted, or mocked. Prefer
 instances (with dependency injection) and a module-level `const` for shared
 values. The `{ allowReadonly: true }` option permits `static readonly`
-constants. Note this also flags `static` factory methods (`static create()`),
-which are common; relax per-file if your design relies on them.
+constants.
+
+Two kinds of static are allowed by default, because neither is behaviour that
+anyone would want to substitute.
+
+**A secondary constructor** — a static whose declared return type is the class
+itself. TypeScript cannot overload a constructor, so `static of(...): DueDate`
+inside `DueDate` is the only way to write one, and calling it is
+indistinguishable from calling `new`. That is what separates a named
+constructor from a procedure that moved into a class:
+
+```ts
+class DueDate {
+  static of(props: DueDateProps): DueDate {}     // allowed
+  static parse(raw: unknown): DueDate {}         // allowed
+}
+
+class DocumentFormatter {
+  static formatCNPJ(document: string): string {} // reported — a module function
+}
+```
+
+`this`, `Promise<Self>` and `Self | undefined` all count: a polymorphic, an
+asynchronous and a failing constructor are still constructors. `Self | null`
+does not, because `no-null-return` already owns that shape. The return type has
+to be **written down** — the rule carries no type information, so an
+unannotated `static create() { … }` stays reported. On a factory the annotation
+is one word, and it is what makes the intent legible. Off via
+`{ allowSelfReturning: false }`.
+
+**A Nest module factory** — a static returning `DynamicModule` from a class
+decorated with `@Module`. `forRoot`, `forRootAsync`, `register` and
+`registerAsync` are mandated by the framework, not chosen by the design. Both
+halves are required, so naming `DynamicModule` in a return type is not a way
+out of the rule, and a module class gets no blanket exemption for its other
+statics. Off via `{ allowModuleFactories: false }`.
+
+Everything else still reports: static accessors (reading one is reaching for
+static state, whatever it returns), `private static` helpers, and static
+classes used as a namespace for functions.
 
 #### `no-null`
 
