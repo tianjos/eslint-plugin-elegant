@@ -1,6 +1,7 @@
 import type { TSESLint } from '@typescript-eslint/utils';
 import noAnonymousParamType from './rules/no-anonymous-param-type';
 import maxClassDependencies from './rules/max-class-dependencies';
+import maxMethodLines from './rules/max-method-lines';
 import maxClassFields from './rules/max-class-fields';
 import maxReturns from './rules/max-returns';
 import maxClassMethods from './rules/max-class-methods';
@@ -12,7 +13,9 @@ import noInstanceof from './rules/no-instanceof';
 import noInterpolatedLogMessage from './rules/no-interpolated-log-message';
 import noLogicInConstructor from './rules/no-logic-in-constructor';
 import noNull from './rules/no-null';
+import noGenericError from './rules/no-generic-error';
 import noNullReturn from './rules/no-null-return';
+import noSelfMutation from './rules/no-self-mutation';
 import noPropertyAlias from './rules/no-property-alias';
 import noPropertyDestructuring from './rules/no-property-destructuring';
 import noPublicMutableProps from './rules/no-public-mutable-props';
@@ -48,6 +51,9 @@ const rules = {
   'no-property-alias': noPropertyAlias,
   'no-property-destructuring': noPropertyDestructuring,
   'no-anonymous-param-type': noAnonymousParamType,
+  'no-self-mutation': noSelfMutation,
+  'no-generic-error': noGenericError,
+  'max-method-lines': maxMethodLines,
 };
 
 type Plugin = {
@@ -91,6 +97,9 @@ plugin.configs.recommended = {
     'elegant/no-property-alias': 'error',
     'elegant/no-property-destructuring': 'error',
     'elegant/no-anonymous-param-type': ['error', { minMembers: 2 }],
+    'elegant/no-self-mutation': 'error',
+    'elegant/no-generic-error': 'error',
+    'elegant/max-method-lines': ['warn', { max: 50 }],
     'max-params': ['warn', { max: 3 }],
     'no-else-return': ['error', { allowElseIf: false }],
   },
