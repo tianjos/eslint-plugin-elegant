@@ -189,11 +189,35 @@ Public state should be `readonly` so callers cannot break an aggregate's
 invariants. A declared `private`/`protected` field is allowed, and so is any
 `readonly` member.
 
+A **decorated** property is allowed by default. `@Column`, `@IsString` and
+friends assign the field from outside the class, so `readonly` would be a lie
+and the property is framework shape rather than state the class chose to carry
+— a NestJS DTO or a TypeORM entity is a wall of them. Pass
+`{ ignoreDecorated: false }` to hold them to the same standard.
+
+```ts
+// passes — the framework populates these
+class BankDto {
+  @IsString() code: string;
+  @IsOptional() ispb_code?: string;
+}
+
+// reported — state the class chose to expose
+class Money {
+  amount = 0;
+}
+```
+
 Constructor parameter properties are covered at **every** visibility by
 default, which declared fields are not: a `private repo: Repository<Proposal>`
 that nobody marked `readonly` can still be swapped from inside, and unlike a
 declared field it is a collaborator the container handed you. Set
 `{ parameterProperties: 'public' }` to keep the rule to what its name says.
+
+`ignoreDecorated` deliberately does not reach parameter properties either. A
+decorator on a parameter is injection (`@Inject(TOKEN)`), which supplies a
+collaborator rather than populating a field, so it still has no business being
+reassignable. `max-class-fields` draws the same line for the same reason.
 
 This rule asks whether a field is *declared* changeable. Its behavioural
 counterpart is `no-self-mutation`, which asks whether anything actually
