@@ -2,6 +2,34 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.7.1](https://github.com/tianjos/eslint-plugin-elegant/compare/v0.7.0...v0.7.1) (2026-09-02)
+
+
+### Bug Fixes
+
+* **rules:** stop no-public-mutable-props flagging mapped properties ([4b73dee](https://github.com/tianjos/eslint-plugin-elegant/commit/4b73deeb5364a54744d6d40966ca91557ca15414))
+
+`no-public-mutable-props` reported every public non-`readonly` declared field,
+which on a NestJS codebase means every DTO and every entity. Measured over
+three of them (1,251 production files), reports drop from **4,508 to 116**.
+
+`@Column`, `@IsString` and friends assign the field from outside the class, so
+`readonly` there would be a lie. The new `{ ignoreDecorated: boolean }` option
+defaults to `true`, matching `max-class-fields`. Pass `false` to hold mapped
+properties to the same standard.
+
+`ignoreDecorated` deliberately does not reach constructor parameter
+properties: a decorator on a parameter is injection, which supplies a
+collaborator rather than populating a field, so
+`@InjectRepository(Proposal) private repo` is still reported.
+
+This supersedes the "Known issue" noted in 0.7.0 — the DTO-glob workaround
+described there is no longer needed.
+
+### Upgrading
+
+Nothing to do. This only removes reports.
+
 ## [0.7.0](https://github.com/tianjos/eslint-plugin-elegant/compare/v0.6.0...v0.7.0) (2026-09-01)
 
 
