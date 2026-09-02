@@ -1,7 +1,9 @@
 import { AST_NODE_TYPES, TSESTree } from '@typescript-eslint/utils';
 import { createRule } from '../utils/createRule';
 
-type Options = [{ parameterProperties: 'public' | 'all' }];
+type Options = [
+  { parameterProperties: 'public' | 'all'; ignoreDecorated: boolean },
+];
 type MessageIds = 'mutableProp';
 
 const isHidden = (
@@ -34,6 +36,19 @@ const isMutable = (
   node.accessibility !== undefined &&
   (scope === 'all' || node.accessibility === 'public');
 
+/**
+ * A property a decorator maps to a table or a payload. `@Column`, `@IsString`
+ * and friends assign it from outside the class, so `readonly` would be a lie
+ * and the field is framework shape rather than state the class chose to carry.
+ *
+ * Deliberately does not reach parameter properties: a decorator on a parameter
+ * is injection (`@Inject(TOKEN)`), so the field is a genuine collaborator and
+ * still has no business being reassignable. `max-class-fields` draws the same
+ * line for the same reason.
+ */
+const isMapped = (node: TSESTree.PropertyDefinition): boolean =>
+  node.decorators.length > 0;
+
 export default createRule<Options, MessageIds>({
   name: 'no-public-mutable-props',
   meta: {
@@ -51,16 +66,21 @@ export default createRule<Options, MessageIds>({
         type: 'object',
         properties: {
           parameterProperties: { type: 'string', enum: ['public', 'all'] },
+          ignoreDecorated: { type: 'boolean' },
         },
         additionalProperties: false,
       },
     ],
   },
-  defaultOptions: [{ parameterProperties: 'all' }],
-  create(context, [{ parameterProperties }]) {
+  defaultOptions: [{ parameterProperties: 'all', ignoreDecorated: true }],
+  create(context, [{ parameterProperties, ignoreDecorated }]) {
     return {
       PropertyDefinition(node): void {
         if (node.readonly || isHidden(node.accessibility)) {
+          return;
+        }
+
+        if (ignoreDecorated && isMapped(node)) {
           return;
         }
         context.report({
