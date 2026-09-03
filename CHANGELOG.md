@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.7.2](https://github.com/tianjos/eslint-plugin-elegant/compare/v0.7.1...v0.7.2) (2026-09-03)
+
+
+### Documentation
+
+Ships the README's new **Adopting on an existing codebase** section to npm. No
+rule behaviour changed, and no severity moved.
+
+The preset had never been measured against a real codebase as a whole. Over
+1,261 production files across three NestJS services it produces 11,603
+reports — 9.20 per file, 10,655 of them errors — and four rules account for
+81% of that:
+
+| Rule | Reports | Per file |
+| --- | ---: | ---: |
+| `no-comments-in-function-body` | 5,559 | 4.41 |
+| `no-interpolated-log-message` | 1,941 | 1.54 |
+| `no-null` | 1,367 | 1.08 |
+| `no-type-assertion` | 524 | 0.42 |
+| *the other 20 combined* | 2,212 | 1.75 |
+
+The section carries the full per-rule table and a staged override that leaves
+1.75 reports per file, so `recommended` can be adopted on code that already
+exists instead of only on code being written from scratch.
+
 ### [0.7.1](https://github.com/tianjos/eslint-plugin-elegant/compare/v0.7.0...v0.7.1) (2026-09-02)
 
 
