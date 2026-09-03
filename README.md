@@ -683,6 +683,74 @@ rules: {
 }
 ```
 
+### Adopting on an existing codebase
+
+The `recommended` config is written for the code you wish you had. Turning it
+on over code that already exists is a different exercise, and worth planning
+with numbers rather than discovering at the first `eslint .`.
+
+Measured over **1,261 production TypeScript files** across three NestJS
+services — a DTO-heavy, string-logging, TypeORM-backed shape this preset was
+built for:
+
+| Rule | Severity | Reports | Per file | In test files |
+| --- | --- | ---: | ---: | ---: |
+| `no-comments-in-function-body` | `error` | 5,559 | 4.41 | 2,589 |
+| `no-interpolated-log-message` | `error` | 1,941 | 1.54 | 0 |
+| `no-null` | `error` | 1,367 | 1.08 | 896 |
+| `no-type-assertion` | `error` | 524 | 0.42 | 935 |
+| `max-method-lines` | `warn` | 467 | 0.37 | 1 |
+| `max-params` | `warn` | 195 | 0.15 | 6 |
+| `no-null-return` | `error` | 194 | 0.15 | 2 |
+| `no-instanceof` | `error` | 179 | 0.14 | 0 |
+| `no-generic-error` | `error` | 163 | 0.13 | 17 |
+| `max-returns` | `warn` | 125 | 0.10 | 0 |
+| `no-public-mutable-props` | `error` | 116 | 0.09 | 0 |
+| `no-property-alias` | `error` | 111 | 0.09 | 1 |
+| `no-logic-in-constructor` | `error` | 98 | 0.08 | 0 |
+| `no-static-members` | `error` | 96 | 0.08 | 0 |
+| `no-anonymous-param-type` | `error` | 91 | 0.07 | 27 |
+| `no-self-mutation` | `error` | 66 | 0.05 | 0 |
+| `max-class-dependencies` | `warn` | 64 | 0.05 | 0 |
+| `max-class-fields` | `warn` | 57 | 0.05 | 0 |
+| `no-property-destructuring` | `error` | 53 | 0.04 | 0 |
+| `no-boolean-param` | `error` | 47 | 0.04 | 1 |
+| `max-class-methods` | `warn` | 40 | 0.03 | 0 |
+| `no-getters-setters` | `error` | 29 | 0.02 | 0 |
+| `no-else-return` | `error` | 13 | 0.01 | 0 |
+| `no-else-after-throw` | `error` | 8 | 0.01 | 0 |
+| **Total** | | **11,603** | **9.20** | |
+
+Four rules account for 81% of it, and they are the four whose principle has a
+boundary this plugin cannot see. `no-comments-in-function-body` asks you to
+rewrite a function, not edit a line. `no-interpolated-log-message` fires on
+whatever logging convention the project already chose, so on a codebase that
+logs with template strings it fires everywhere. `no-null` cannot tell a domain
+value from the wire format of a database column. `no-type-assertion` counts
+`x as unknown as T` twice, once per assertion, which is arguably correct.
+
+None of that makes them wrong — it makes them rules you adopt on purpose
+rather than inherit. **Enable the preset, then take the top of that table back
+to `warn` or `off` and work down it.** The rules below `no-type-assertion` sum
+to 1.75 per file, which is a starting point you can actually clear:
+
+```js
+rules: {
+  ...elegant.configs.recommended.rules,
+
+  // The four that need a plan of their own. Re-enable one at a time.
+  'elegant/no-comments-in-function-body': 'off',
+  'elegant/no-interpolated-log-message': 'warn',
+  'elegant/no-null': 'warn',
+  'elegant/no-type-assertion': 'warn',
+}
+```
+
+Numbers from one corpus are indicative, not universal. Run
+`npx eslint . --format json` on your own and sort by rule before deciding
+anything — the shape of your code decides which of these rules is a signal and
+which is a migration.
+
 ### Relaxing rules in test files
 
 Tests routinely use flag arguments and larger fixtures. Add a second config
