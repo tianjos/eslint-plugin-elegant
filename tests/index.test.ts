@@ -44,6 +44,22 @@ describe('plugin surface', () => {
     );
   });
 
+  it('offers a starter config that demotes the four noisiest rules', () => {
+    const starter = plugin.configs.starter.rules ?? {};
+
+    expect(starter['elegant/no-comments-in-function-body']).toBe('off');
+    expect(starter['elegant/no-interpolated-log-message']).toBe('warn');
+    expect(starter['elegant/no-null']).toBe('warn');
+    expect(starter['elegant/no-type-assertion']).toBe('warn');
+  });
+
+  it('starter carries every rule recommended carries', () => {
+    const recommended = Object.keys(plugin.configs.recommended.rules ?? {});
+    const starter = Object.keys(plugin.configs.starter.rules ?? {});
+
+    expect(starter.sort()).toEqual(recommended.sort());
+  });
+
   it('enables every rule in the recommended config', () => {
     for (const name of Object.keys(plugin.rules)) {
       expect(plugin.configs.recommended.rules).toHaveProperty(

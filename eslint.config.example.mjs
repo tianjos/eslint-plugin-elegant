@@ -17,6 +17,9 @@ export default [
     },
     plugins: { elegant },
     rules: {
+      // Adopting on a codebase that already exists? Swap `recommended` for
+      // `starter`: same rules, with the four heaviest demoted so the first run
+      // gives you a list you can work through.
       ...elegant.configs.recommended.rules,
       // Override a threshold when a class legitimately needs more surface:
       // 'elegant/max-class-methods': ['warn', { max: 15 }],
