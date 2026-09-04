@@ -30,3 +30,27 @@ export const escapesIntoFunction = (
 
     return false;
   });
+
+/**
+ * Whether a name resolves to a binding a `catch` clause introduced.
+ * TypeScript types a caught value as `unknown`, so `instanceof` is the only
+ * narrowing the language offers there — no method on the value can stand in
+ * for it, because at that point the value has no known methods.
+ */
+export const isCaughtBinding = (
+  scope: TSESLint.Scope.Scope,
+  name: string,
+): boolean => {
+  let current: TSESLint.Scope.Scope | null = scope;
+
+  while (current !== null) {
+    const found = current.variables.find((variable) => variable.name === name);
+
+    if (found !== undefined) {
+      return found.defs.some((def) => def.type === 'CatchClause');
+    }
+    current = current.upper;
+  }
+
+  return false;
+};

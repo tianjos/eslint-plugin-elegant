@@ -6,6 +6,14 @@ const ruleTester = new RuleTester();
 ruleTester.run('no-self-mutation', rule, {
   valid: [
     {
+      name: 'a top-level write has no object and no constructor to look for',
+      code: 'this.token = "x";',
+    },
+    {
+      name: 'an old-style constructor function is building, not mutating',
+      code: 'function Money(amount) { this.amount = amount; }',
+    },
+    {
       name: 'writing to another object is that object\'s business',
       code: 'class Cache { store(box: Box, value: string): void { box.value = value; } }',
     },

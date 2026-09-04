@@ -245,6 +245,44 @@ around repositories and framework hooks, so it stays off in `recommended`.
 the object. Pairs with `no-type-assertion` to keep type-based branching out of
 the codebase.
 
+Two uses are allowed by default, because in both of them TypeScript leaves no
+polymorphic alternative to reach for.
+
+**A self-guard** — `other instanceof Money` inside `class Money`. Value
+equality has to guard its own type before comparing fields, and there is no
+polymorphic way to write that: the method is already on the object, so the
+rule's own advice has nowhere left to go. Guarding against a *different* type
+(`other instanceof Currency` inside `Money`) is discrimination and is still
+reported. Off via `{ allowSelfGuard: false }`.
+
+**A caught value** — a name a `catch` clause introduced. TypeScript types it
+as `unknown`, so `instanceof` is the only narrowing the language offers; no
+method on the value can stand in, because at that point the value has no known
+methods. Resolved through the scope chain, so the narrowing still counts one
+closure deeper. Off via `{ allowCaughtValues: false }`.
+
+```ts
+// allowed
+class Money {
+  equals(other?: unknown): boolean {
+    return other instanceof Money && this.amount === other.amount;
+  }
+}
+try { charge(); } catch (error) {
+  if (error instanceof HttpException) { log(error.getStatus()); }
+}
+
+// still reported
+if (shape instanceof Circle) { draw(); }
+function handle(error: HttpException) { return error instanceof HttpException; }
+```
+
+An error that arrives as a plain parameter rather than through `catch` — Nest's
+`ExceptionFilter.catch(exception, host)`, an RxJS `catchError` callback — is
+**not** covered, because a parameter's type is whatever the signature says and
+the rule reads no type information. Narrow it once at the boundary, or disable
+the rule for those files.
+
 #### `no-static-members`
 
 Static state and behavior cannot be injected, substituted, or mocked. Prefer

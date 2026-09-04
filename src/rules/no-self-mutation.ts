@@ -1,4 +1,5 @@
 import { AST_NODE_TYPES, TSESTree } from '@typescript-eslint/utils';
+import { closestAncestor } from '../utils/ancestors';
 import { createRule } from '../utils/createRule';
 
 type Options = [{ allowedMethods: string[] }];
@@ -30,44 +31,51 @@ const fieldOf = (target: TSESTree.Node): string | undefined =>
     : undefined;
 
 /**
+ * Whether the write sits inside a class body at all. `this` outside one is
+ * `module.exports`, `undefined`, or an object literal's own receiver — none of
+ * which is an object with holders to surprise, so the rule has nothing to say
+ * about them.
+ */
+const isInsideClass = (node: TSESTree.Node): boolean =>
+  closestAncestor(
+    node,
+    (candidate) =>
+      candidate.type === AST_NODE_TYPES.ClassBody ||
+      candidate.type === AST_NODE_TYPES.ClassDeclaration ||
+      candidate.type === AST_NODE_TYPES.ClassExpression,
+  ) !== undefined;
+
+/**
  * Whether the write happens while the object is still being built. Only the
  * constructor's own body counts: a callback the constructor schedules runs
  * after construction has returned, so it mutates a finished object.
  */
 const isDuringConstruction = (node: TSESTree.Node): boolean => {
-  let current: TSESTree.Node | undefined = node;
+  const fn = closestAncestor(
+    node,
+    (candidate) =>
+      candidate.type === AST_NODE_TYPES.ArrowFunctionExpression ||
+      candidate.type === AST_NODE_TYPES.FunctionDeclaration ||
+      candidate.type === AST_NODE_TYPES.FunctionExpression,
+  );
 
-  while (current !== undefined) {
-    if (
-      current.type === AST_NODE_TYPES.ArrowFunctionExpression ||
-      current.type === AST_NODE_TYPES.FunctionDeclaration ||
-      current.type === AST_NODE_TYPES.FunctionExpression
-    ) {
-      return (
-        current.parent?.type === AST_NODE_TYPES.MethodDefinition &&
-        current.parent.kind === 'constructor'
-      );
-    }
-    current = current.parent;
-  }
-
-  return false;
+  return (
+    fn?.parent?.type === AST_NODE_TYPES.MethodDefinition &&
+    fn.parent.kind === 'constructor'
+  );
 };
 
 /** The method a write sits in, if it sits in one directly. */
 const enclosingMethod = (node: TSESTree.Node): string | undefined => {
-  let current: TSESTree.Node | undefined = node;
+  const method = closestAncestor(
+    node,
+    (candidate) => candidate.type === AST_NODE_TYPES.MethodDefinition,
+  );
 
-  while (current !== undefined) {
-    if (current.type === AST_NODE_TYPES.MethodDefinition) {
-      return current.key.type === AST_NODE_TYPES.Identifier
-        ? current.key.name
-        : undefined;
-    }
-    current = current.parent;
-  }
-
-  return undefined;
+  return method?.type === AST_NODE_TYPES.MethodDefinition &&
+    method.key.type === AST_NODE_TYPES.Identifier
+    ? method.key.name
+    : undefined;
 };
 
 export default createRule<Options, MessageIds>({
@@ -97,7 +105,11 @@ export default createRule<Options, MessageIds>({
     const check = (node: TSESTree.Node, target: TSESTree.Node): void => {
       const name = fieldOf(target);
 
-      if (name === undefined || isDuringConstruction(node)) {
+      if (
+        name === undefined ||
+        !isInsideClass(node) ||
+        isDuringConstruction(node)
+      ) {
         return;
       }
 
