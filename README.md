@@ -73,9 +73,15 @@ A complete, copy-pasteable example (including test-file overrides) lives in
 
 ## Rules
 
-The `recommended` config enables every custom rule plus two native ones,
-[`max-params`](https://eslint.org/docs/latest/rules/max-params) and
-[`no-else-return`](https://eslint.org/docs/latest/rules/no-else-return).
+The plugin exports two configs, both carrying every rule below plus two native
+ones, [`max-params`](https://eslint.org/docs/latest/rules/max-params) and
+[`no-else-return`](https://eslint.org/docs/latest/rules/no-else-return):
+
+- **`recommended`** — the severities in the table below. What the plugin
+  argues for.
+- **`starter`** — the same rules with the four heaviest demoted, for adopting
+  on a codebase that already exists. See
+  [Adopting on an existing codebase](#adopting-on-an-existing-codebase).
 
 | Rule                                   | Source | What it catches                                                                 | `recommended` |
 | -------------------------------------- | ------ | ------------------------------------------------------------------------------- | ------------- |
@@ -830,7 +836,9 @@ block scoped to your spec globs:
 The package ships a single CommonJS build that is consumable as both
 `require('@tianjos/eslint-plugin-elegant')` and an ESM
 `import elegant from '@tianjos/eslint-plugin-elegant'`. The exported object
-exposes `{ meta, rules, configs }`.
+exposes `{ meta, rules, configs }`, where `configs` holds `recommended` and
+`starter`. All three load paths are exercised against the built output by
+`tests/dist.test.ts`.
 
 ## Prior art
 
