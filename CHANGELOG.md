@@ -2,6 +2,56 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.8.0](https://github.com/tianjos/eslint-plugin-elegant/compare/v0.7.2...v0.8.0) (2026-09-04)
+
+
+### Features
+
+* **rules:** let no-instanceof allow self-guards and caught values ([fbb8b01](https://github.com/tianjos/eslint-plugin-elegant/commit/fbb8b016f8fa19c3f733fccf661f5782d07f6676))
+
+
+### Bug Fixes
+
+* **rules:** stop no-self-mutation crashing on a top-level this write ([e43995c](https://github.com/tianjos/eslint-plugin-elegant/commit/e43995c632aff18bf19f96ae905a93c78716956e))
+
+**Upgrade if you are on 0.7.0 or 0.7.1.** `no-self-mutation` threw a
+`TypeError` on `this.something = value` written at module scope, and a rule
+that throws takes the whole lint run for that file down with it — silently,
+so the file simply stops being analysed. `Program.parent` is `null` rather
+than `undefined`, and the ancestor walk only guarded against `undefined`.
+
+Writes are also confined to class bodies now: `this` outside one is
+`module.exports`, `undefined`, or an object literal's own receiver, and none
+of those has holders to surprise. An old-style
+`function Money(amount) { this.amount = amount }` is construction and no
+longer reports.
+
+### `no-instanceof` gains two options, both on by default
+
+Over 1,261 production files the rule produced 179 reports and, on reading
+every one, none was the defect it describes — there was no
+`if (x instanceof Dog) else if (x instanceof Cat)` replacing polymorphism
+anywhere. Two categories now pass, because TypeScript leaves no polymorphic
+alternative in either:
+
+- `allowSelfGuard` — `other instanceof Money` inside `class Money`. Value
+  equality has to guard its own type before comparing fields, and the check
+  is already in a method on the object, which is where the rule's advice
+  points. Guarding a *different* type still reports.
+- `allowCaughtValues` — a name a `catch` clause introduced, resolved through
+  the scope chain. TypeScript types it `unknown`, so no method on the value
+  can stand in for `instanceof`.
+
+Reports over that corpus go from 179 to 76. The remainder narrows
+`Date | string` out of a database driver, or an error that arrived as a
+parameter rather than through `catch` (Nest's `ExceptionFilter.catch`, an RxJS
+`catchError` callback). Telling those apart from the real defect needs type
+information, which no rule here uses.
+
+### Upgrading
+
+Nothing to do. Both changes only remove reports.
+
 ### [0.7.2](https://github.com/tianjos/eslint-plugin-elegant/compare/v0.7.1...v0.7.2) (2026-09-03)
 
 
