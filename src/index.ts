@@ -105,6 +105,35 @@ plugin.configs.recommended = {
   },
 };
 
+/**
+ * The four rules that carry most of the friction on code that already exists.
+ * Each encodes a defensible position whose boundary this plugin cannot see —
+ * a comment that wants to be a function, a logging convention already chosen,
+ * `null` as the wire format of a column, an assertion widening a type — so on
+ * a mature codebase they report by the thousand. `recommended` keeps them at
+ * `error` on purpose; `starter` is the door in.
+ */
+const NOISIEST: TSESLint.FlatConfig.Rules = {
+  'elegant/no-comments-in-function-body': 'off',
+  'elegant/no-interpolated-log-message': 'warn',
+  'elegant/no-null': 'warn',
+  'elegant/no-type-assertion': 'warn',
+};
+
+/**
+ * Every rule `recommended` carries, with the four heaviest demoted so the
+ * first run on an existing codebase produces a list somebody can work through.
+ * Promote them back one at a time; see "Adopting on an existing codebase".
+ */
+plugin.configs.starter = {
+  name: 'elegant/starter',
+  plugins: { elegant: plugin },
+  rules: {
+    ...plugin.configs.recommended.rules,
+    ...NOISIEST,
+  },
+};
+
 plugin.default = plugin;
 
 export = plugin;

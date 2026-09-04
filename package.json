@@ -43,7 +43,7 @@
     "build": "tsc -p tsconfig.json",
     "lint": "npm run build && eslint .",
     "typecheck": "tsc -p tsconfig.test.json",
-    "test": "jest",
+    "test": "npm run build && jest",
     "release": "standard-version --release-as minor",
     "release:patch": "standard-version --release-as patch",
     "prepublishOnly": "npm run build && npm test"

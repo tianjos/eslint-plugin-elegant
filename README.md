@@ -63,6 +63,11 @@ export default [
 ];
 ```
 
+Adopting this on a codebase that already exists? Spread
+`elegant.configs.starter` instead — same rules, with the four heaviest demoted
+so the first run gives you a list you can work through. See
+[Adopting on an existing codebase](#adopting-on-an-existing-codebase).
+
 A complete, copy-pasteable example (including test-file overrides) lives in
 [`eslint.config.example.mjs`](./eslint.config.example.mjs).
 
@@ -768,19 +773,31 @@ value from the wire format of a database column. `no-type-assertion` counts
 `x as unknown as T` twice, once per assertion, which is arguably correct.
 
 None of that makes them wrong — it makes them rules you adopt on purpose
-rather than inherit. **Enable the preset, then take the top of that table back
-to `warn` or `off` and work down it.** The rules below `no-type-assertion` sum
-to 1.75 per file, which is a starting point you can actually clear:
+rather than inherit. That is what `starter` is: every rule `recommended`
+carries, with those four demoted, leaving the 1.75 per file below them — a
+list somebody can actually work through.
 
 ```js
 rules: {
-  ...elegant.configs.recommended.rules,
+  ...elegant.configs.starter.rules,
+}
+```
 
-  // The four that need a plan of their own. Re-enable one at a time.
-  'elegant/no-comments-in-function-body': 'off',
-  'elegant/no-interpolated-log-message': 'warn',
-  'elegant/no-null': 'warn',
-  'elegant/no-type-assertion': 'warn',
+| | `recommended` | `starter` |
+| --- | --- | --- |
+| `no-comments-in-function-body` | `error` | `off` |
+| `no-interpolated-log-message` | `error` | `warn` |
+| `no-null` | `error` | `warn` |
+| `no-type-assertion` | `error` | `warn` |
+| everything else | unchanged | unchanged |
+
+Promote them back one at a time as you clear them, and switch to
+`recommended` once nothing is left:
+
+```js
+rules: {
+  ...elegant.configs.starter.rules,
+  'elegant/no-null': 'error',   // cleared, so hold the line
 }
 ```
 

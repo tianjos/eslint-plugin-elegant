@@ -5,13 +5,17 @@
 ```bash
 npm ci          # install
 npm run build   # compile dist/ with tsc
-npm test        # run the rule tests (jest + @typescript-eslint/rule-tester)
+npm test        # build, then run the rule tests (jest + @typescript-eslint/rule-tester)
 npm run typecheck
 npm run lint    # the plugin held to its own recommended config
 ```
 
-`npm run lint` builds first, because `eslint.config.mjs` reads the plugin from
-`dist/`. CI runs it between build and test and fails on errors only: the `max-*`
+`npm run lint` and `npm test` both build first: `eslint.config.mjs` reads the
+plugin from `dist/`, and `tests/dist.test.ts` runs real Node against the built
+output to check that the package still loads through `require`,
+`require(...).default` and an ESM `import` — an interop shape that exists only
+after compilation and would otherwise break on a consumer's machine rather
+than here. Use `npx jest` directly for a fast inner loop. CI runs it between build and test and fails on errors only: the `max-*`
 rules ship as warnings because a threshold is a judgement, and a judgement
 should not block a merge.
 
