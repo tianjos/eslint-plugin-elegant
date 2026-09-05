@@ -2,6 +2,54 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.9.0](https://github.com/tianjos/eslint-plugin-elegant/compare/v0.8.0...v0.9.0) (2026-09-05)
+
+
+### Features
+
+* add a starter config, and test the package actually loads ([8f023f7](https://github.com/tianjos/eslint-plugin-elegant/commit/8f023f7a0a4eecbce3e1adbbfdf0238381e3ce5a))
+
+### `configs.starter`
+
+A second config for adopting the plugin on a codebase that already exists.
+`recommended` costs 9.20 reports per file on a mature NestJS codebase, and the
+way in used to be a paragraph of README asking you to hand-write four
+overrides. It is now one line:
+
+```js
+rules: { ...elegant.configs.starter.rules }
+```
+
+| | `recommended` | `starter` |
+| --- | --- | --- |
+| `no-comments-in-function-body` | `error` | `off` |
+| `no-interpolated-log-message` | `error` | `warn` |
+| `no-null` | `error` | `warn` |
+| `no-type-assertion` | `error` | `warn` |
+| everything else | unchanged | unchanged |
+
+That leaves the 1.75 reports per file below those four — a list somebody can
+work through. Promote them back one at a time as you clear them, and switch to
+`recommended` once nothing is left.
+
+**`recommended` is untouched.** It still says exactly what it said; `starter`
+is a door in, not a softening of the stance.
+
+### The package is now tested as a consumer sees it
+
+`tests/dist.test.ts` runs real Node against `dist/` and checks the package
+loads through `require`, through `require(...).default` as the same object,
+and through an ESM default import. That interop rests on `export =` plus a
+self-reference, which a change to the module target or the exports map would
+break silently, on a consumer's machine rather than in CI. It compares `dist`
+against the source plugin, so a stale build fails too.
+
+`npm test` therefore builds first, as `npm run lint` already did.
+
+### Upgrading
+
+Nothing to do. `recommended` is unchanged and no rule behaviour moved.
+
 ## [0.8.0](https://github.com/tianjos/eslint-plugin-elegant/compare/v0.7.2...v0.8.0) (2026-09-04)
 
 
