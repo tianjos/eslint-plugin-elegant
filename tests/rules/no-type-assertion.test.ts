@@ -17,5 +17,15 @@ ruleTester.run('no-type-assertion', rule, {
       code: 'const id = <string>value;',
       errors: [{ messageId: 'noAssertion' }],
     },
+    {
+      name: 'a non-null assertion overrides the checker the same way `as` does',
+      code: 'const rate = origin.subsequentRate!;',
+      errors: [{ messageId: 'nonNullAssertion' }],
+    },
+    {
+      name: 'the operator is reported wherever it sits, not only in a declaration',
+      code: 'function rate(origin: Origin): number { return origin.subsequentRate!; }',
+      errors: [{ messageId: 'nonNullAssertion' }],
+    },
   ],
 });
