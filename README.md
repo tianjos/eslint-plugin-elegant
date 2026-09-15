@@ -89,7 +89,8 @@ ones, [`max-params`](https://eslint.org/docs/latest/rules/max-params) and
 | `elegant/max-class-methods`            | custom | Classes with more methods than the configured `max` (constructors excluded)     | `warn` (max 10) |
 | `elegant/max-class-dependencies`       | custom | Classes depending on more distinct collaborators than `max` (constructor injections plus `new`) | `warn` (max 4) |
 | `elegant/max-class-fields`             | custom | Classes holding more instance fields than `max` (declared fields plus parameter properties) | `warn` (max 5) |
-| `elegant/no-type-assertion`            | custom | `value as T` and `<T>value` assertions (`as const` is allowed)                  | `error`       |
+| `elegant/no-type-assertion`            | custom | `value as T`, `<T>value`, and `value!` assertions (`as const` is allowed)       | `error`       |
+| `elegant/no-any-return`                | custom | `any` (or `Promise<any>`) declared as a function's return type                  | `error`       |
 | `elegant/no-null-return`               | custom | `return null` statements                                                        | `error`       |
 | `elegant/no-public-mutable-props`      | custom | Public, non-`readonly` class properties and public constructor parameter props  | `error`       |
 | `elegant/no-logic-in-constructor`      | custom | Any constructor code beyond `this.field = value` stores and a `super(...)` call  | `error`       |
@@ -189,10 +190,74 @@ Assertions silence the type checker. Reach for a type guard, a generic, or a
 correctly typed value instead. `as const` is permitted because it narrows rather
 than widens.
 
+All three syntactic forms are the same act, so all three are reported: `value
+as T`, `<T>value`, and the non-null operator `value!`. The last one is the one
+worth naming, because it is the cheapest to type and the most expensive to be
+wrong about — `entity.rate!` compiles whether the column is nullable, whether
+the driver hands back a string, or whether the row simply has no value. Narrow
+it with a check that throws, or correct the type if it was never nullable:
+
+```ts
+// reported
+const rate = origin.subsequentRate!;
+
+// intended
+const requireRate = (origin: Origin): number => {
+  if (origin.subsequentRate === undefined) {
+    throw new MissingRateError(origin.code);
+  }
+  return origin.subsequentRate;
+};
+```
+
+Pairs with [`no-any-return`](#no-any-return), which closes the way around it.
+
+#### `no-any-return`
+
+A function whose declared return type is `any` widens every value that passes
+through it. That is a type assertion — the caller writes `const body: T =
+parse(raw)` and the checker agrees — except it is invisible: `as T` is
+greppable at the call site, an `any` return is not.
+
+This is the shape `no-type-assertion` pushes code into if nothing catches it.
+The cast does not disappear; it moves one call deeper and stops being reviewable.
+
+```ts
+// reported — every caller's type is asserted for them
+const readJson = async (response: Response): Promise<any> => response.json();
+
+// intended — the caller narrows, or supplies the type it is claiming
+const readJson = async (response: Response): Promise<unknown> => response.json();
+const request = async <T>(path: string): Promise<T> => fetch(path).then(parse);
+```
+
+Return position only. `any` on a *parameter* is a different (lesser) defect and
+belongs to [`@typescript-eslint/no-explicit-any`](https://typescript-eslint.io/rules/no-explicit-any);
+this rule stays narrow so it can ship in the preset without requiring
+type-aware linting. `Promise<any>` counts, because awaiting it is not a
+narrowing step.
+
 #### `no-null-return`
 
-Keeps absence out of return values; model it with an explicit domain type or
-throw.
+Keeps absence out of return values. Throw when the value must exist, or return
+an object that answers for the absent case — a null object, a domain type with
+a "nothing found" state.
+
+An empty collection models absence only where the return type *was already* a
+collection. Wrapping a single value in a zero-or-one array to dodge this rule
+is a null in a box: the type now promises a list it will never have more than
+one of, and every caller loops over something that is really an `if`.
+
+```ts
+// reported
+function decide(status: number): Retry | null { ... }
+
+// a null in a box — the type lies, and callers write a loop that runs once
+function decide(status: number): Retry[] { ... }
+
+// intended
+function decide(status: number): Retry { return matched ?? Retry.none(); }
+```
 
 #### `no-public-mutable-props`
 
@@ -256,7 +321,7 @@ around repositories and framework hooks, so it stays off in `recommended`.
 the object. Pairs with `no-type-assertion` to keep type-based branching out of
 the codebase.
 
-Two uses are allowed by default, because in both of them TypeScript leaves no
+Three uses are allowed by default, because in each of them TypeScript leaves no
 polymorphic alternative to reach for.
 
 **A self-guard** — `other instanceof Money` inside `class Money`. Value
@@ -272,6 +337,22 @@ method on the value can stand in, because at that point the value has no known
 methods. Resolved through the scope chain, so the narrowing still counts one
 closure deeper. Off via `{ allowCaughtValues: false }`.
 
+**A declared type guard** — a function whose return type is a predicate,
+`value is X`. Some classes are nominal and offer no discriminant to switch on:
+a framework exception, a value object from another module, an `Error` subclass.
+The check has to happen somewhere, and a `value is X` signature is the one
+place it states what it is doing — the answer leaves as a narrowed type instead
+of a bare boolean, the class name is written once, and the project ends up with
+one greppable guard per class rather than an `instanceof` in the middle of a
+method. Only the innermost enclosing function counts, so a guard cannot lend
+its exemption to the code that follows it. Off via `{ allowTypeGuards: false }`.
+
+This exists so the cheapest way out of the rule is also the honest one. Without
+it, the reachable workaround is structural duck typing — `'toDate' in value`
+instead of `value instanceof IsoDate` — which passes the linter, passes for any
+object that happens to carry the member, and is strictly worse than what it
+replaced.
+
 ```ts
 // allowed
 class Money {
@@ -282,11 +363,18 @@ class Money {
 try { charge(); } catch (error) {
   if (error instanceof HttpException) { log(error.getStatus()); }
 }
+export const isIsoDate = (value: unknown): value is IsoDate =>
+  value instanceof IsoDate;
 
 // still reported
 if (shape instanceof Circle) { draw(); }
 function handle(error: HttpException) { return error instanceof HttpException; }
+function isIsoDate(value: unknown): boolean { return value instanceof IsoDate; }
 ```
+
+The last one is the near miss worth spelling out: a function that returns
+`boolean` declares nothing. It is a guard only once the signature says
+`value is IsoDate`.
 
 An error that arrives as a plain parameter rather than through `catch` — Nest's
 `ExceptionFilter.catch(exception, host)`, an RxJS `catchError` callback — is
@@ -806,6 +894,16 @@ rules: {
   'elegant/no-null': 'error',   // cleared, so hold the line
 }
 ```
+
+Two rules arrived after that measurement and are not in the table above:
+`no-any-return`, and `no-type-assertion`'s coverage of the non-null operator
+`x!`. Measured separately over a fourth service — 135 production files, same
+shape — they are tail rules, not migrations: **2** reports for `x!` and **0**
+for `no-any-return`. The interesting number is from the same repository *after*
+a full pass to green under `starter`: the tree linted clean, and the two rules
+still found one `Promise<any>` return that had absorbed a cast the pass had
+removed. They are cheap to adopt and they close a door the other rules push
+people through.
 
 Numbers from one corpus are indicative, not universal. Run
 `npx eslint . --format json` on your own and sort by rule before deciding
