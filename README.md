@@ -68,13 +68,17 @@ Adopting this on a codebase that already exists? Spread
 so the first run gives you a list you can work through. See
 [Adopting on an existing codebase](#adopting-on-an-existing-codebase).
 
-A complete, copy-pasteable example (including test-file overrides) lives in
+Two more configs exist for the files a preset should not judge the same way —
+`tests` and `off`. See [Relaxing rules in test files](#relaxing-rules-in-test-files)
+and [Generated and scaffolded files](#generated-and-scaffolded-files).
+
+A complete, copy-pasteable example (including those overrides) lives in
 [`eslint.config.example.mjs`](./eslint.config.example.mjs).
 
 ## Rules
 
-The plugin exports two configs, both carrying every rule below plus two native
-ones, [`max-params`](https://eslint.org/docs/latest/rules/max-params) and
+The plugin exports four configs. Two are presets — `recommended` and `starter`
+— carrying every rule below plus two native ones, [`max-params`](https://eslint.org/docs/latest/rules/max-params) and
 [`no-else-return`](https://eslint.org/docs/latest/rules/no-else-return):
 
 - **`recommended`** — the severities in the table below. What the plugin
@@ -82,6 +86,10 @@ ones, [`max-params`](https://eslint.org/docs/latest/rules/max-params) and
 - **`starter`** — the same rules with the four heaviest demoted, for adopting
   on a codebase that already exists. See
   [Adopting on an existing codebase](#adopting-on-an-existing-codebase).
+- **`tests`** — an override, not a preset: the eight rules a spec legitimately
+  trips, off. See [Relaxing rules in test files](#relaxing-rules-in-test-files).
+- **`off`** — an override too: every rule disabled, for generated files. See
+  [Generated and scaffolded files](#generated-and-scaffolded-files).
 
 | Rule                                   | Source | What it catches                                                                 | `recommended` |
 | -------------------------------------- | ------ | ------------------------------------------------------------------------------- | ------------- |
@@ -306,6 +314,49 @@ and I/O belong in a static factory or a method, keeping object construction
 predictable. Parameter properties (`constructor(private readonly x: T)`) and a
 leading `super(...)` are allowed; computed right-hand sides (`this.x = x * 2`,
 `this.items = items.slice()`) and any non-assignment statement are flagged.
+
+**On a class a DI container builds**, the remedy the rule names does not exist:
+nobody calls `new` on a Nest provider, so there is no static factory to move
+the work to. The tempting move is to push it into a lifecycle hook, and that
+trades one rule for a worse invariant — the field stops being `readonly` and
+starts being assigned some time after construction:
+
+```ts
+// reported
+constructor(private readonly config: ConfigService) {
+  this.baseUrl = this.config.getOrThrow('COBRANSAAS_BASE_URL');
+}
+
+// worse: the field is now mutable and empty until a hook runs
+private baseUrl: string;
+onModuleInit() {
+  this.baseUrl = this.config.getOrThrow('COBRANSAAS_BASE_URL');
+}
+```
+
+Resolve the config where the module is wired, and inject the result. The
+constructor goes back to storing an argument, the field stays `readonly`, and a
+missing variable fails at boot instead of on the first request:
+
+```ts
+// cobransaas.module.ts
+providers: [
+  {
+    provide: COBRANSAAS_SETTINGS,
+    inject: [ConfigService],
+    useFactory: (config: ConfigService): CobransaasSettings => ({
+      baseUrl: config.getOrThrow('COBRANSAAS_BASE_URL'),
+      clientId: config.getOrThrow('COBRANSAAS_CLIENT_ID'),
+    }),
+  },
+]
+
+// cobransaas-http-client.service.ts
+constructor(
+  @Inject(COBRANSAAS_SETTINGS)
+  private readonly settings: CobransaasSettings,
+) {}
+```
 
 #### `no-getters-setters`
 
@@ -912,30 +963,62 @@ which is a migration.
 
 ### Relaxing rules in test files
 
-Tests routinely use flag arguments and larger fixtures. Add a second config
-block scoped to your spec globs:
+Spread `tests` in a config block scoped to your spec globs:
 
 ```js
 {
   files: ['**/*.spec.ts', '**/*.test.ts', '**/*.e2e-spec.ts'],
-  rules: {
-    'elegant/no-boolean-param': 'off',
-    'elegant/max-class-methods': 'off',
-    'elegant/max-class-dependencies': 'off',
-    'elegant/max-class-fields': 'off',
-    'elegant/no-comments-in-function-body': 'off',
-    'max-params': 'off',
-  },
+  rules: { ...elegant.configs.tests.rules },
 }
 ```
+
+It turns off eight rules, and the list is a measurement rather than a taste.
+Over the corpus above, these are the rules that actually report inside test
+files, each for a reason that holds there and nowhere else:
+
+| Rule | Reports in tests | Why it holds in a spec |
+| --- | ---: | --- |
+| `no-comments-in-function-body` | 2,589 | a spec narrates the scenario |
+| `no-type-assertion` | 935 | a mock asserts a type over a partial object |
+| `no-null` | 896 | a fixture mirrors a nullable column |
+| `no-anonymous-param-type` | 27 | a fixture builder takes an inline shape |
+| `no-generic-error` | 17 | `throw new Error('boom')` as a failure stub |
+| `max-params` | 6 | a setup helper |
+| `no-null-return` | 2 | a fixture returns absence |
+| `no-boolean-param` | 1 | `make*(withRefunds: true)` names the case under test |
+
+What the list leaves out is deliberate. `max-class-fields`, `max-returns`,
+`no-static-members`, `no-interpolated-log-message` and the other class-shape
+rules report **zero** times in specs on that corpus, so switching them off buys
+nothing today and costs you the report on the day a spec finally earns one.
+Turn a rule off when you have seen it fire and disagreed — not in advance.
+
+### Generated and scaffolded files
+
+Some files are not written by hand: a migration the TypeORM CLI emits, a script
+that generates an OpenAPI document and talks to an operator through `console`.
+Judging them by rules meant for domain code produces churn in files nobody
+should reopen. Spread `off`, which is every rule this plugin ships, disabled:
+
+```js
+{
+  files: ['src/database/migrations/**/*.ts', 'utils/**/*.ts'],
+  rules: { ...elegant.configs.off.rules },
+}
+```
+
+Derived from the plugin's own rule list rather than spelled out in your config,
+so a rule added in a later version arrives already silent in those files. A
+hand-rolled equivalent — mapping over `Object.keys(elegant.rules)` in your own
+config — goes stale the moment it is written.
 
 ## Compatibility
 
 The package ships a single CommonJS build that is consumable as both
 `require('@tianjos/eslint-plugin-elegant')` and an ESM
 `import elegant from '@tianjos/eslint-plugin-elegant'`. The exported object
-exposes `{ meta, rules, configs }`, where `configs` holds `recommended` and
-`starter`. All three load paths are exercised against the built output by
+exposes `{ meta, rules, configs }`, where `configs` holds `recommended`,
+`starter`, `tests`, and `off`. All three load paths are exercised against the built output by
 `tests/dist.test.ts`.
 
 ## Prior art
