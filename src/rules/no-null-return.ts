@@ -9,11 +9,11 @@ export default createRule<[], MessageIds>({
     type: 'suggestion',
     docs: {
       description:
-        'Disallow returning null. Model absence with an explicit type, an Optional/Maybe, or by throwing.',
+        'Disallow returning null. Throw when the value must exist, return an object that answers for the absent case, or — when the return type is already a collection — an empty one.',
     },
     messages: {
       noNullReturn:
-        'Returning null leaks absence into callers. Return an explicit empty value, a domain type, or throw.',
+        'Returning null leaks absence into callers. Throw if the value must exist, or return an object that answers for the absent case. An empty collection models absence only where the return type was already a collection — a zero-or-one array is a null in a box.',
     },
     schema: [],
   },
