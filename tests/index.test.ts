@@ -44,6 +44,15 @@ describe('plugin surface', () => {
     );
   });
 
+  it('errors on `any` return types by default, in both configs', () => {
+    expect(plugin.configs.recommended.rules?.['elegant/no-any-return']).toBe(
+      'error',
+    );
+    expect(plugin.configs.starter.rules?.['elegant/no-any-return']).toBe(
+      'error',
+    );
+  });
+
   it('offers a starter config that demotes the four noisiest rules', () => {
     const starter = plugin.configs.starter.rules ?? {};
 

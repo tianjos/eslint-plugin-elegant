@@ -1,5 +1,6 @@
 import type { TSESLint } from '@typescript-eslint/utils';
 import noAnonymousParamType from './rules/no-anonymous-param-type';
+import noAnyReturn from './rules/no-any-return';
 import maxClassDependencies from './rules/max-class-dependencies';
 import maxMethodLines from './rules/max-method-lines';
 import maxClassFields from './rules/max-class-fields';
@@ -32,6 +33,7 @@ const { name, version } = require('../package.json') as {
 };
 
 const rules = {
+  'no-any-return': noAnyReturn,
   'no-boolean-param': noBooleanParam,
   'max-class-methods': maxClassMethods,
   'max-class-dependencies': maxClassDependencies,
@@ -78,6 +80,7 @@ plugin.configs.recommended = {
   name: 'elegant/recommended',
   plugins: { elegant: plugin },
   rules: {
+    'elegant/no-any-return': 'error',
     'elegant/no-boolean-param': 'error',
     'elegant/max-class-methods': ['warn', { max: 10 }],
     'elegant/max-class-dependencies': ['warn', { max: 4 }],
