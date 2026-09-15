@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.10.0](https://github.com/tianjos/eslint-plugin-elegant/compare/v0.9.0...v0.10.0) (2026-09-15)
+
+
+### Features
+
+* export tests and off configs for the files a preset should not judge ([6916959](https://github.com/tianjos/eslint-plugin-elegant/commit/6916959f2e658c7456afd05171bc4318b557dfc8))
+* **rules:** add no-any-return ([2ece119](https://github.com/tianjos/eslint-plugin-elegant/commit/2ece119dac3d59b4fa969073be30bb5a5c35cfe5))
+* **rules:** let no-instanceof allow declared type guards ([f34394e](https://github.com/tianjos/eslint-plugin-elegant/commit/f34394e3b6440900c4b7bf2cd2069cc8df6390f3))
+* **rules:** report the non-null operator in no-type-assertion ([a315885](https://github.com/tianjos/eslint-plugin-elegant/commit/a3158855c4f6d25783b9fc59ff2a6538f5858874))
+
 ## [0.9.0](https://github.com/tianjos/eslint-plugin-elegant/compare/v0.8.0...v0.9.0) (2026-09-05)
 
 
