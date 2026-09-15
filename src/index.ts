@@ -137,6 +137,51 @@ plugin.configs.starter = {
   },
 };
 
+/**
+ * Every rule this plugin ships, off. For files nobody writes by hand: a
+ * migration the TypeORM CLI scaffolds, a build script that talks to an
+ * operator through `console`. Derived from `rules` here rather than listed in
+ * the consumer's config, so a rule added in a later version arrives already
+ * silent in those files instead of reporting on generated code.
+ */
+plugin.configs.off = {
+  name: 'elegant/off',
+  plugins: { elegant: plugin },
+  rules: Object.fromEntries(
+    Object.keys(rules).map((rule) => [`elegant/${rule}`, 'off']),
+  ),
+};
+
+/**
+ * The rules a spec legitimately trips, off — and only those.
+ *
+ * Which ones those are is a measurement, not a taste: over the corpus in
+ * "Adopting on an existing codebase", these eight are the rules that fire
+ * inside test files, each for a reason that holds there and nowhere else. A
+ * mock has to assert a type over a partial object, a fixture mirrors a
+ * nullable column, `make*(withRefunds: true)` names the scenario under test,
+ * and a spec narrates.
+ *
+ * The rules kept out of this list are kept out on purpose. `max-class-fields`,
+ * `max-returns`, `no-static-members` and the rest report zero times in specs
+ * on that corpus, so turning them off buys nothing and costs the report on the
+ * day a spec finally earns one.
+ */
+plugin.configs.tests = {
+  name: 'elegant/tests',
+  plugins: { elegant: plugin },
+  rules: {
+    'elegant/no-comments-in-function-body': 'off',
+    'elegant/no-type-assertion': 'off',
+    'elegant/no-null': 'off',
+    'elegant/no-null-return': 'off',
+    'elegant/no-generic-error': 'off',
+    'elegant/no-boolean-param': 'off',
+    'elegant/no-anonymous-param-type': 'off',
+    'max-params': 'off',
+  },
+};
+
 plugin.default = plugin;
 
 export = plugin;

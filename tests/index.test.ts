@@ -69,6 +69,55 @@ describe('plugin surface', () => {
     expect(starter.sort()).toEqual(recommended.sort());
   });
 
+  it('offers an off config covering exactly the rules the plugin ships', () => {
+    const off = plugin.configs.off.rules ?? {};
+
+    expect(Object.keys(off).sort()).toEqual(
+      Object.keys(plugin.rules)
+        .map((name) => `elegant/${name}`)
+        .sort(),
+    );
+    expect(Object.values(off).every((severity) => severity === 'off')).toBe(
+      true,
+    );
+  });
+
+  it('offers a tests config that silences the eight rules specs legitimately trip', () => {
+    const tests = plugin.configs.tests.rules ?? {};
+
+    expect(Object.keys(tests).sort()).toEqual(
+      [
+        'elegant/no-anonymous-param-type',
+        'elegant/no-boolean-param',
+        'elegant/no-comments-in-function-body',
+        'elegant/no-generic-error',
+        'elegant/no-null',
+        'elegant/no-null-return',
+        'elegant/no-type-assertion',
+        'max-params',
+      ].sort(),
+    );
+    expect(Object.values(tests).every((severity) => severity === 'off')).toBe(
+      true,
+    );
+  });
+
+  it('leaves rules that never fire in specs enabled, rather than off by superstition', () => {
+    const tests = plugin.configs.tests.rules ?? {};
+
+    for (const name of [
+      'elegant/max-class-methods',
+      'elegant/max-class-dependencies',
+      'elegant/max-class-fields',
+      'elegant/max-returns',
+      'elegant/no-static-members',
+      'elegant/no-interpolated-log-message',
+      'elegant/no-any-return',
+    ]) {
+      expect(tests).not.toHaveProperty(name);
+    }
+  });
+
   it('enables every rule in the recommended config', () => {
     for (const name of Object.keys(plugin.rules)) {
       expect(plugin.configs.recommended.rules).toHaveProperty(

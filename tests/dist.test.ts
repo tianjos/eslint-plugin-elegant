@@ -47,7 +47,7 @@ describe('the built package', () => {
       name: plugin.meta.name,
       version: plugin.meta.version,
       sameObject: true,
-      configs: ['recommended', 'starter'],
+      configs: ['off', 'recommended', 'starter', 'tests'],
     });
   });
 
