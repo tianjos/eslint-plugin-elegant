@@ -35,9 +35,25 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm test
+      # A tag is not proof the version is unpublished: someone can publish from
+      # a laptop before pushing it, or re-push a tag after a failed run. Without
+      # this the job dies on "cannot publish over the previously published
+      # versions", which reads as a broken build when nothing is broken.
+      # A `npm view` that fails for any other reason leaves `already` unset, so
+      # the publish still runs and fails loudly — the safe default.
+      - id: published
+        run: |
+          version="$(node -p 'require("./package.json").version')"
+          name="$(node -p 'require("./package.json").name')"
+          if npm view "$name@$version" version >/dev/null 2>&1; then
+            echo "$name@$version is already on the registry — skipping publish" >> "$GITHUB_STEP_SUMMARY"
+            echo "already=true" >> "$GITHUB_OUTPUT"
+          fi
+
       # build + test already ran above, so skip the prepublishOnly hook (which
       # would repeat them). dist/ is built and shipped via the "files" field.
       # Authenticates through OIDC: no token, nothing to expire, no 2FA
       # prompt. Requires the trusted publisher registration on npmjs.com to
       # name this repository and this workflow file.
-      - run: npm publish --ignore-scripts --provenance
+      - if: steps.published.outputs.already != 'true'
+        run: npm publish --ignore-scripts --provenance
