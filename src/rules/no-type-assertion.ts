@@ -1,7 +1,7 @@
 import { AST_NODE_TYPES, TSESTree } from '@typescript-eslint/utils';
 import { createRule } from '../utils/createRule';
 
-type MessageIds = 'noAssertion';
+type MessageIds = 'noAssertion' | 'nonNullAssertion';
 
 const isAsConst = (node: TSESTree.TSAsExpression): boolean =>
   node.typeAnnotation.type === AST_NODE_TYPES.TSTypeReference &&
@@ -14,11 +14,13 @@ export default createRule<[], MessageIds>({
     type: 'suggestion',
     docs: {
       description:
-        'Disallow type assertions, which bypass the type checker. Prefer type guards, generics, or honest types. `as const` is allowed.',
+        'Disallow type assertions, which bypass the type checker: `as T`, `<T>x`, and the non-null operator `x!`. Prefer type guards, generics, or honest types. `as const` is allowed.',
     },
     messages: {
       noAssertion:
         'Type assertions silence the type checker. Use a type guard, a generic, or a correctly typed value instead.',
+      nonNullAssertion:
+        '`!` asserts away a nullable the type says is there. Narrow it with a check that throws, or correct the type if it was never nullable.',
     },
     schema: [],
   },
@@ -33,6 +35,9 @@ export default createRule<[], MessageIds>({
       },
       TSTypeAssertion(node): void {
         context.report({ node, messageId: 'noAssertion' });
+      },
+      TSNonNullExpression(node): void {
+        context.report({ node, messageId: 'nonNullAssertion' });
       },
     };
   },

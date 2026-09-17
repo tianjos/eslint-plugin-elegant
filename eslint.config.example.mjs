@@ -26,20 +26,31 @@ export default [
       // 'elegant/max-class-dependencies': ['warn', { max: 6, ignore: ['Logger'] }],
       // 'elegant/max-class-fields': ['warn', { max: 8 }],
       // 'max-params': ['warn', { max: 4 }],
+      //
+      // Some classes are nominal and offer no discriminant — a framework
+      // exception, an Error subclass. `no-instanceof` already lets a declared
+      // `value is X` guard through; turn that off to hold guards to the same
+      // standard as everything else:
+      // 'elegant/no-instanceof': ['error', { allowTypeGuards: false }],
     },
   },
 
-  // Relax the stricter rules in test files, where flag arguments and
-  // larger fixtures are common and harmless.
+  // Specs legitimately trip eight of these rules — a mock asserts a type over a
+  // partial object, a fixture mirrors a nullable column, a spec narrates. The
+  // list is measured, not guessed; see the README.
   {
     files: ['**/*.spec.ts', '**/*.test.ts', '**/*.e2e-spec.ts'],
+    rules: { ...elegant.configs.tests.rules },
+  },
+
+  // Files nobody writes by hand: migrations a CLI scaffolds, build scripts that
+  // talk to an operator through `console`. Judging them by rules meant for
+  // domain code produces churn in files nobody should reopen.
+  {
+    files: ['src/database/migrations/**/*.ts', 'utils/**/*.ts'],
     rules: {
-      'elegant/no-boolean-param': 'off',
-      'elegant/max-class-methods': 'off',
-      'elegant/max-class-dependencies': 'off',
-      'elegant/max-class-fields': 'off',
-      'elegant/no-comments-in-function-body': 'off',
-      'max-params': 'off',
+      ...elegant.configs.off.rules,
+      'no-console': 'off',
     },
   },
 ];

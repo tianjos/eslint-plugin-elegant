@@ -68,13 +68,17 @@ Adopting this on a codebase that already exists? Spread
 so the first run gives you a list you can work through. See
 [Adopting on an existing codebase](#adopting-on-an-existing-codebase).
 
-A complete, copy-pasteable example (including test-file overrides) lives in
+Two more configs exist for the files a preset should not judge the same way —
+`tests` and `off`. See [Relaxing rules in test files](#relaxing-rules-in-test-files)
+and [Generated and scaffolded files](#generated-and-scaffolded-files).
+
+A complete, copy-pasteable example (including those overrides) lives in
 [`eslint.config.example.mjs`](./eslint.config.example.mjs).
 
 ## Rules
 
-The plugin exports two configs, both carrying every rule below plus two native
-ones, [`max-params`](https://eslint.org/docs/latest/rules/max-params) and
+The plugin exports four configs. Two are presets — `recommended` and `starter`
+— carrying every rule below plus two native ones, [`max-params`](https://eslint.org/docs/latest/rules/max-params) and
 [`no-else-return`](https://eslint.org/docs/latest/rules/no-else-return):
 
 - **`recommended`** — the severities in the table below. What the plugin
@@ -82,6 +86,10 @@ ones, [`max-params`](https://eslint.org/docs/latest/rules/max-params) and
 - **`starter`** — the same rules with the four heaviest demoted, for adopting
   on a codebase that already exists. See
   [Adopting on an existing codebase](#adopting-on-an-existing-codebase).
+- **`tests`** — an override, not a preset: the eight rules a spec legitimately
+  trips, off. See [Relaxing rules in test files](#relaxing-rules-in-test-files).
+- **`off`** — an override too: every rule disabled, for generated files. See
+  [Generated and scaffolded files](#generated-and-scaffolded-files).
 
 | Rule                                   | Source | What it catches                                                                 | `recommended` |
 | -------------------------------------- | ------ | ------------------------------------------------------------------------------- | ------------- |
@@ -89,7 +97,8 @@ ones, [`max-params`](https://eslint.org/docs/latest/rules/max-params) and
 | `elegant/max-class-methods`            | custom | Classes with more methods than the configured `max` (constructors excluded)     | `warn` (max 10) |
 | `elegant/max-class-dependencies`       | custom | Classes depending on more distinct collaborators than `max` (constructor injections plus `new`) | `warn` (max 4) |
 | `elegant/max-class-fields`             | custom | Classes holding more instance fields than `max` (declared fields plus parameter properties) | `warn` (max 5) |
-| `elegant/no-type-assertion`            | custom | `value as T` and `<T>value` assertions (`as const` is allowed)                  | `error`       |
+| `elegant/no-type-assertion`            | custom | `value as T`, `<T>value`, and `value!` assertions (`as const` is allowed)       | `error`       |
+| `elegant/no-any-return`                | custom | `any` (or `Promise<any>`) declared as a function's return type                  | `error`       |
 | `elegant/no-null-return`               | custom | `return null` statements                                                        | `error`       |
 | `elegant/no-public-mutable-props`      | custom | Public, non-`readonly` class properties and public constructor parameter props  | `error`       |
 | `elegant/no-logic-in-constructor`      | custom | Any constructor code beyond `this.field = value` stores and a `super(...)` call  | `error`       |
@@ -189,10 +198,74 @@ Assertions silence the type checker. Reach for a type guard, a generic, or a
 correctly typed value instead. `as const` is permitted because it narrows rather
 than widens.
 
+All three syntactic forms are the same act, so all three are reported: `value
+as T`, `<T>value`, and the non-null operator `value!`. The last one is the one
+worth naming, because it is the cheapest to type and the most expensive to be
+wrong about — `entity.rate!` compiles whether the column is nullable, whether
+the driver hands back a string, or whether the row simply has no value. Narrow
+it with a check that throws, or correct the type if it was never nullable:
+
+```ts
+// reported
+const rate = origin.subsequentRate!;
+
+// intended
+const requireRate = (origin: Origin): number => {
+  if (origin.subsequentRate === undefined) {
+    throw new MissingRateError(origin.code);
+  }
+  return origin.subsequentRate;
+};
+```
+
+Pairs with [`no-any-return`](#no-any-return), which closes the way around it.
+
+#### `no-any-return`
+
+A function whose declared return type is `any` widens every value that passes
+through it. That is a type assertion — the caller writes `const body: T =
+parse(raw)` and the checker agrees — except it is invisible: `as T` is
+greppable at the call site, an `any` return is not.
+
+This is the shape `no-type-assertion` pushes code into if nothing catches it.
+The cast does not disappear; it moves one call deeper and stops being reviewable.
+
+```ts
+// reported — every caller's type is asserted for them
+const readJson = async (response: Response): Promise<any> => response.json();
+
+// intended — the caller narrows, or supplies the type it is claiming
+const readJson = async (response: Response): Promise<unknown> => response.json();
+const request = async <T>(path: string): Promise<T> => fetch(path).then(parse);
+```
+
+Return position only. `any` on a *parameter* is a different (lesser) defect and
+belongs to [`@typescript-eslint/no-explicit-any`](https://typescript-eslint.io/rules/no-explicit-any);
+this rule stays narrow so it can ship in the preset without requiring
+type-aware linting. `Promise<any>` counts, because awaiting it is not a
+narrowing step.
+
 #### `no-null-return`
 
-Keeps absence out of return values; model it with an explicit domain type or
-throw.
+Keeps absence out of return values. Throw when the value must exist, or return
+an object that answers for the absent case — a null object, a domain type with
+a "nothing found" state.
+
+An empty collection models absence only where the return type *was already* a
+collection. Wrapping a single value in a zero-or-one array to dodge this rule
+is a null in a box: the type now promises a list it will never have more than
+one of, and every caller loops over something that is really an `if`.
+
+```ts
+// reported
+function decide(status: number): Retry | null { ... }
+
+// a null in a box — the type lies, and callers write a loop that runs once
+function decide(status: number): Retry[] { ... }
+
+// intended
+function decide(status: number): Retry { return matched ?? Retry.none(); }
+```
 
 #### `no-public-mutable-props`
 
@@ -242,6 +315,49 @@ predictable. Parameter properties (`constructor(private readonly x: T)`) and a
 leading `super(...)` are allowed; computed right-hand sides (`this.x = x * 2`,
 `this.items = items.slice()`) and any non-assignment statement are flagged.
 
+**On a class a DI container builds**, the remedy the rule names does not exist:
+nobody calls `new` on a Nest provider, so there is no static factory to move
+the work to. The tempting move is to push it into a lifecycle hook, and that
+trades one rule for a worse invariant — the field stops being `readonly` and
+starts being assigned some time after construction:
+
+```ts
+// reported
+constructor(private readonly config: ConfigService) {
+  this.baseUrl = this.config.getOrThrow('COBRANSAAS_BASE_URL');
+}
+
+// worse: the field is now mutable and empty until a hook runs
+private baseUrl: string;
+onModuleInit() {
+  this.baseUrl = this.config.getOrThrow('COBRANSAAS_BASE_URL');
+}
+```
+
+Resolve the config where the module is wired, and inject the result. The
+constructor goes back to storing an argument, the field stays `readonly`, and a
+missing variable fails at boot instead of on the first request:
+
+```ts
+// cobransaas.module.ts
+providers: [
+  {
+    provide: COBRANSAAS_SETTINGS,
+    inject: [ConfigService],
+    useFactory: (config: ConfigService): CobransaasSettings => ({
+      baseUrl: config.getOrThrow('COBRANSAAS_BASE_URL'),
+      clientId: config.getOrThrow('COBRANSAAS_CLIENT_ID'),
+    }),
+  },
+]
+
+// cobransaas-http-client.service.ts
+constructor(
+  @Inject(COBRANSAAS_SETTINGS)
+  private readonly settings: CobransaasSettings,
+) {}
+```
+
 #### `no-getters-setters`
 
 Getters and setters turn objects into data bags; prefer methods that expose
@@ -256,7 +372,7 @@ around repositories and framework hooks, so it stays off in `recommended`.
 the object. Pairs with `no-type-assertion` to keep type-based branching out of
 the codebase.
 
-Two uses are allowed by default, because in both of them TypeScript leaves no
+Three uses are allowed by default, because in each of them TypeScript leaves no
 polymorphic alternative to reach for.
 
 **A self-guard** — `other instanceof Money` inside `class Money`. Value
@@ -272,6 +388,22 @@ method on the value can stand in, because at that point the value has no known
 methods. Resolved through the scope chain, so the narrowing still counts one
 closure deeper. Off via `{ allowCaughtValues: false }`.
 
+**A declared type guard** — a function whose return type is a predicate,
+`value is X`. Some classes are nominal and offer no discriminant to switch on:
+a framework exception, a value object from another module, an `Error` subclass.
+The check has to happen somewhere, and a `value is X` signature is the one
+place it states what it is doing — the answer leaves as a narrowed type instead
+of a bare boolean, the class name is written once, and the project ends up with
+one greppable guard per class rather than an `instanceof` in the middle of a
+method. Only the innermost enclosing function counts, so a guard cannot lend
+its exemption to the code that follows it. Off via `{ allowTypeGuards: false }`.
+
+This exists so the cheapest way out of the rule is also the honest one. Without
+it, the reachable workaround is structural duck typing — `'toDate' in value`
+instead of `value instanceof IsoDate` — which passes the linter, passes for any
+object that happens to carry the member, and is strictly worse than what it
+replaced.
+
 ```ts
 // allowed
 class Money {
@@ -282,11 +414,18 @@ class Money {
 try { charge(); } catch (error) {
   if (error instanceof HttpException) { log(error.getStatus()); }
 }
+export const isIsoDate = (value: unknown): value is IsoDate =>
+  value instanceof IsoDate;
 
 // still reported
 if (shape instanceof Circle) { draw(); }
 function handle(error: HttpException) { return error instanceof HttpException; }
+function isIsoDate(value: unknown): boolean { return value instanceof IsoDate; }
 ```
+
+The last one is the near miss worth spelling out: a function that returns
+`boolean` declares nothing. It is a guard only once the signature says
+`value is IsoDate`.
 
 An error that arrives as a plain parameter rather than through `catch` — Nest's
 `ExceptionFilter.catch(exception, host)`, an RxJS `catchError` callback — is
@@ -807,6 +946,16 @@ rules: {
 }
 ```
 
+Two rules arrived after that measurement and are not in the table above:
+`no-any-return`, and `no-type-assertion`'s coverage of the non-null operator
+`x!`. Measured separately over a fourth service — 135 production files, same
+shape — they are tail rules, not migrations: **2** reports for `x!` and **0**
+for `no-any-return`. The interesting number is from the same repository *after*
+a full pass to green under `starter`: the tree linted clean, and the two rules
+still found one `Promise<any>` return that had absorbed a cast the pass had
+removed. They are cheap to adopt and they close a door the other rules push
+people through.
+
 Numbers from one corpus are indicative, not universal. Run
 `npx eslint . --format json` on your own and sort by rule before deciding
 anything — the shape of your code decides which of these rules is a signal and
@@ -814,30 +963,62 @@ which is a migration.
 
 ### Relaxing rules in test files
 
-Tests routinely use flag arguments and larger fixtures. Add a second config
-block scoped to your spec globs:
+Spread `tests` in a config block scoped to your spec globs:
 
 ```js
 {
   files: ['**/*.spec.ts', '**/*.test.ts', '**/*.e2e-spec.ts'],
-  rules: {
-    'elegant/no-boolean-param': 'off',
-    'elegant/max-class-methods': 'off',
-    'elegant/max-class-dependencies': 'off',
-    'elegant/max-class-fields': 'off',
-    'elegant/no-comments-in-function-body': 'off',
-    'max-params': 'off',
-  },
+  rules: { ...elegant.configs.tests.rules },
 }
 ```
+
+It turns off eight rules, and the list is a measurement rather than a taste.
+Over the corpus above, these are the rules that actually report inside test
+files, each for a reason that holds there and nowhere else:
+
+| Rule | Reports in tests | Why it holds in a spec |
+| --- | ---: | --- |
+| `no-comments-in-function-body` | 2,589 | a spec narrates the scenario |
+| `no-type-assertion` | 935 | a mock asserts a type over a partial object |
+| `no-null` | 896 | a fixture mirrors a nullable column |
+| `no-anonymous-param-type` | 27 | a fixture builder takes an inline shape |
+| `no-generic-error` | 17 | `throw new Error('boom')` as a failure stub |
+| `max-params` | 6 | a setup helper |
+| `no-null-return` | 2 | a fixture returns absence |
+| `no-boolean-param` | 1 | `make*(withRefunds: true)` names the case under test |
+
+What the list leaves out is deliberate. `max-class-fields`, `max-returns`,
+`no-static-members`, `no-interpolated-log-message` and the other class-shape
+rules report **zero** times in specs on that corpus, so switching them off buys
+nothing today and costs you the report on the day a spec finally earns one.
+Turn a rule off when you have seen it fire and disagreed — not in advance.
+
+### Generated and scaffolded files
+
+Some files are not written by hand: a migration the TypeORM CLI emits, a script
+that generates an OpenAPI document and talks to an operator through `console`.
+Judging them by rules meant for domain code produces churn in files nobody
+should reopen. Spread `off`, which is every rule this plugin ships, disabled:
+
+```js
+{
+  files: ['src/database/migrations/**/*.ts', 'utils/**/*.ts'],
+  rules: { ...elegant.configs.off.rules },
+}
+```
+
+Derived from the plugin's own rule list rather than spelled out in your config,
+so a rule added in a later version arrives already silent in those files. A
+hand-rolled equivalent — mapping over `Object.keys(elegant.rules)` in your own
+config — goes stale the moment it is written.
 
 ## Compatibility
 
 The package ships a single CommonJS build that is consumable as both
 `require('@tianjos/eslint-plugin-elegant')` and an ESM
 `import elegant from '@tianjos/eslint-plugin-elegant'`. The exported object
-exposes `{ meta, rules, configs }`, where `configs` holds `recommended` and
-`starter`. All three load paths are exercised against the built output by
+exposes `{ meta, rules, configs }`, where `configs` holds `recommended`,
+`starter`, `tests`, and `off`. All three load paths are exercised against the built output by
 `tests/dist.test.ts`.
 
 ## Prior art

@@ -17,6 +17,18 @@ ruleTester.run('no-instanceof', rule, {
       name: 'the same narrowing one closure deeper',
       code: 'try { charge(); } catch (error) { retry(() => (error instanceof Error ? error.message : String(error))); }',
     },
+    {
+      name: 'a declared type guard is where a nominal check belongs, so it is legal by construction',
+      code: 'export const isHttpException = (value: unknown): value is HttpException => value instanceof HttpException;',
+    },
+    {
+      name: 'the guard may be a function declaration with a body',
+      code: 'function isIsoDate(value: unknown): value is IsoDate { return value instanceof IsoDate; }',
+    },
+    {
+      name: 'a guard may refine past the nominal check without losing the exemption',
+      code: 'function isServerFault(value: unknown): value is HttpException { return value instanceof HttpException && value.getStatus() >= 500; }',
+    },
     { code: 'if (shape.isRound()) { draw(); }' },
     { code: 'const kind = typeof value;' },
   ],
@@ -44,8 +56,25 @@ ruleTester.run('no-instanceof', rule, {
       errors: [{ messageId: 'noInstanceof' }],
     },
     {
-      code: 'if (shape instanceof Circle) { draw(); }',
+      name: 'a function that merely returns boolean is not a guard — it declares nothing',
+      code: 'function isHttpException(value: unknown): boolean { return value instanceof HttpException; }',
       errors: [{ messageId: 'noInstanceof' }],
+    },
+    {
+      name: 'a predicate on one function does not license instanceof in the next one',
+      code: 'function isIsoDate(value: unknown): value is IsoDate { return value instanceof IsoDate; } function toDate(value: unknown) { return value instanceof IsoDate ? value.toDate() : value; }',
+      errors: [{ messageId: 'noInstanceof' }],
+    },
+    {
+      name: 'allowTypeGuards: false holds declared guards to the same standard',
+      code: 'const isHttpException = (value: unknown): value is HttpException => value instanceof HttpException;',
+      options: [{ allowTypeGuards: false }],
+      errors: [{ messageId: 'noInstanceof' }],
+    },
+    {
+      name: 'the message names the class, so the guard it asks for has a signature',
+      code: 'if (shape instanceof Circle) { draw(); }',
+      errors: [{ messageId: 'noInstanceof', data: { name: 'Circle' } }],
     },
     {
       code: 'const isError = value instanceof Error;',
