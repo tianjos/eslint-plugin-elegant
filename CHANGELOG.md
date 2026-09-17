@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.10.1](https://github.com/tianjos/eslint-plugin-elegant/compare/v0.10.0...v0.10.1) (2026-09-17)
+
+Nenhuma mudança no que o pacote entrega: `dist/`, regras e configs são idênticos
+aos de `0.10.0`. Esta versão existe só para carregar a attestation de
+procedência — `0.10.0` foi publicado de uma máquina em vez do workflow, e por
+isso não tem `--provenance`. Quem já está em `0.10.0` não precisa atualizar.
+
 ## [0.10.0](https://github.com/tianjos/eslint-plugin-elegant/compare/v0.9.0...v0.10.0) (2026-09-15)
 
 
