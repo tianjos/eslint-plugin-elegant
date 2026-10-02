@@ -2,6 +2,24 @@
 
 ## Development
 
+Run `nvm use` first. The repo pins Node through `.nvmrc`, and the CI workflows
+read the same file, so local and CI never drift.
+
+**Node 24 segfaults this test suite**, 24.14 through 24.21, in roughly a third
+of runs. It is a V8 bug, not ours: Sparkplug's `BaselineOutOfLinePrologue`
+pushes a register V8 never fills in Node's build, and a mark-compact GC
+arriving at that moment reads the junk as a heap pointer
+(`ClearStaleLeftTrimmedPointerVisitor::VisitRootPointers`). Upstream is
+[nodejs/node#62393](https://github.com/nodejs/node/issues/62393); the V8 fix is
+backported in [#65753](https://github.com/nodejs/node/pull/65753), merged but
+not yet in a 24.x release. Node 22 and Node 26 are unaffected.
+
+It is worth recognising because 24.21 kills only the jest workers, so it
+surfaces as `Test suite failed to run … signal=SIGSEGV` and exit 1 — it reads
+like a broken test. If you must stay on Node 24, `node --no-sparkplug
+node_modules/jest/bin/jest.js` is clean (the flag is rejected in
+`NODE_OPTIONS`). Otherwise just `nvm use`.
+
 ```bash
 npm ci          # install
 npm run build   # compile dist/ with tsc
@@ -25,7 +43,7 @@ test file in `tests/rules/`.
 
 ## Releasing
 
-Releases are driven by [`standard-version`](https://github.com/conventional-changelog/standard-version),
+Releases are driven by [`commit-and-tag-version`](https://github.com/absolute-version/commit-and-tag-version),
 which updates `CHANGELOG.md`, bumps `package.json`, and creates an annotated git
 tag in one command:
 
@@ -41,18 +59,18 @@ Pushing a `v*` tag triggers the publish workflow
 involved, and there is nothing to rotate.
 
 **Both scripts state the bump explicitly, and that is deliberate.** While the
-version is below `1.0.0`, standard-version demotes every recommendation by one
-level — a `feat:` commit yields a patch, not a minor. The line responsible is
-`lib/lifecycles/bump.js`:
+version is below `1.0.0`, commit-and-tag-version demotes every recommendation
+by one level — a `feat:` commit yields a patch, not a minor. The line
+responsible is `lib/lifecycles/bump.js`:
 
 ```js
 if (semver.lt(currentVersion, '1.0.0')) presetOptions.preMajor = true
 ```
 
-It runs after the preset is loaded, so a `.versionrc` or a `standard-version`
-key in `package.json` cannot switch it off. Letting the tool choose would
-silently ship new rules as a patch. Releasing `1.0.0` is what removes the
-demotion for good; until then, name the bump.
+It runs after the preset is loaded, so a `.versionrc` or a
+`commit-and-tag-version` key in `package.json` cannot switch it off. Letting
+the tool choose would silently ship new rules as a patch. Releasing `1.0.0` is
+what removes the demotion for good; until then, name the bump.
 
 ### Commit message conventions
 
