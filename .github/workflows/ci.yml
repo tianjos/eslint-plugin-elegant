@@ -8,12 +8,19 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Every supported release line. A bare major resolves to its newest
+        # release, which matters for 24: everything before 24.22.0 segfaults
+        # jest workers (V8 Sparkplug bug, nodejs/node#62393).
+        node-version: [22, 24, 26]
     steps:
       - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v6
         with:
-          node-version-file: .nvmrc
+          node-version: ${{ matrix.node-version }}
           cache: npm
 
       - run: npm ci
