@@ -57,3 +57,37 @@ jobs:
       # name this repository and this workflow file.
       - if: steps.published.outputs.already != 'true'
         run: npm publish --ignore-scripts --provenance
+
+  # A job of its own so write access to the repository never reaches the job
+  # that runs `npm ci` and third-party install code. `needs` keeps the order
+  # honest: a GitHub Release only appears once the version is on npm.
+  github-release:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+
+      # Notes come from the CHANGELOG section commit-and-tag-version wrote for
+      # this tag: `##` for minors, `###` for patches, ended by the next version
+      # heading. An empty section means the tag and CHANGELOG disagree, so fail
+      # rather than publish a blank release. Skips when the release exists, so
+      # re-running the workflow for a tag is safe.
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="$GITHUB_REF_NAME"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Release $tag already exists — skipping" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          awk -v v="${tag#v}" '
+            /^###? \[[0-9]/ { if (found) exit; if (index($0, "[" v "]")) { found = 1; next } }
+            found
+          ' CHANGELOG.md > notes.md
+          if ! grep -q '[^[:space:]]' notes.md; then
+            echo "::error::No CHANGELOG.md section for $tag"
+            exit 1
+          fi
+          gh release create "$tag" --verify-tag --title "$tag" --notes-file notes.md
