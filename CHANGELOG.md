@@ -1,6 +1,13 @@
 # Changelog
 
-All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
+
+## [0.11.0](https://github.com/tianjos/eslint-plugin-elegant/compare/v0.10.1...v0.11.0) (2026-10-15)
+
+### Bug Fixes
+
+* **deps:** narrow the typescript peer range to what this package supports ([006b43b](https://github.com/tianjos/eslint-plugin-elegant/commit/006b43b8c45b14c6969d8404a96f3141ea436c70))
+* **engines:** narrow node to the release lines CI actually tests ([478d0f9](https://github.com/tianjos/eslint-plugin-elegant/commit/478d0f98feeb5f87b325a16d17dbefc0747d505a))
 
 ### [0.10.1](https://github.com/tianjos/eslint-plugin-elegant/compare/v0.10.0...v0.10.1) (2026-09-17)
 
