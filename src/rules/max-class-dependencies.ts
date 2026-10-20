@@ -57,6 +57,18 @@ const instantiated = (
   };
 };
 
+/** What the report says about a class over budget: who, how many, and which. */
+const summaryOf = (
+  body: TSESTree.ClassBody,
+  dependencies: Dependencies,
+  max: number,
+): Record<string, number | string> => ({
+  name: body.parent.id?.name ?? '(anonymous)',
+  count: dependencies.size,
+  max,
+  names: [...dependencies].join(', '),
+});
+
 export default createRule<Options, MessageIds>({
   name: 'max-class-dependencies',
   meta: {
@@ -123,12 +135,7 @@ export default createRule<Options, MessageIds>({
         context.report({
           node: node.parent.id ?? node,
           messageId: 'tooManyDependencies',
-          data: {
-            name: node.parent.id?.name ?? '(anonymous)',
-            count: dependencies.size,
-            max,
-            names: [...dependencies].join(', '),
-          },
+          data: summaryOf(node, dependencies, max),
         });
       },
     };

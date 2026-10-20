@@ -1,5 +1,5 @@
-import { AST_NODE_TYPES, TSESTree } from '@typescript-eslint/utils';
 import { createRule } from '../utils/createRule';
+import { FunctionLike, functionName } from '../utils/functionName';
 
 type Options = [{ max: number }];
 type MessageIds = 'tooManyLines';
@@ -28,51 +28,25 @@ export default createRule<Options, MessageIds>({
   },
   defaultOptions: [{ max: DEFAULT_MAX }],
   create(context, [{ max }]) {
-    const measure = (
-      node: TSESTree.Node,
-      name: string,
-      key: TSESTree.Node,
-    ): void => {
+    const measure = (node: FunctionLike): void => {
+      const name = functionName(node);
       const count = node.loc.end.line - node.loc.start.line + 1;
 
-      if (count <= max) {
+      if (name === undefined || count <= max) {
         return;
       }
 
       context.report({
-        node: key,
+        node: name,
         messageId: 'tooManyLines',
-        data: { name, count, max },
+        data: { name: name.name, count, max },
       });
     };
 
     return {
-      MethodDefinition(node): void {
-        if (node.key.type !== AST_NODE_TYPES.Identifier) {
-          return;
-        }
-
-        measure(node, node.key.name, node.key);
-      },
-      FunctionDeclaration(node): void {
-        if (node.id === null) {
-          return;
-        }
-
-        measure(node, node.id.name, node.id);
-      },
-      VariableDeclarator(node): void {
-        if (
-          node.id.type !== AST_NODE_TYPES.Identifier ||
-          node.init === null ||
-          (node.init.type !== AST_NODE_TYPES.ArrowFunctionExpression &&
-            node.init.type !== AST_NODE_TYPES.FunctionExpression)
-        ) {
-          return;
-        }
-
-        measure(node.init, node.id.name, node.id);
-      },
+      ArrowFunctionExpression: measure,
+      FunctionDeclaration: measure,
+      FunctionExpression: measure,
     };
   },
 });

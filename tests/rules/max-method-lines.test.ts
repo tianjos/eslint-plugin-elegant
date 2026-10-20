@@ -14,6 +14,11 @@ ruleTester.run('max-method-lines', rule, {
       options: [{ max: 20 }],
     },
     {
+      name: 'decorators annotate a method; they are not part of its body',
+      code: `class ReportController {\n  @Get(':id')\n  @UseGuards(AuthGuard)\n  build(): void {\n${body(3)}\n  }\n}`,
+      options: [{ max: 5 }],
+    },
+    {
       name: 'a method within the budget',
       code: `class Report { build(): void {\n${body(3)}\n} }`,
       options: [{ max: 10 }],
@@ -35,6 +40,30 @@ ruleTester.run('max-method-lines', rule, {
     {
       name: 'a method longer than the budget',
       code: `class Report { build(): void {\n${body(6)}\n} }`,
+      options: [{ max: 5 }],
+      errors: [
+        { messageId: 'tooManyLines', data: { name: 'build', count: 8, max: 5 } },
+      ],
+    },
+    {
+      name: 'an arrow held in a class field is a method in all but syntax',
+      code: `class Report { build = (): void => {\n${body(6)}\n}; }`,
+      options: [{ max: 5 }],
+      errors: [
+        { messageId: 'tooManyLines', data: { name: 'build', count: 8, max: 5 } },
+      ],
+    },
+    {
+      name: 'a method in an object literal is a named unit',
+      code: `const handlers = { build(): void {\n${body(6)}\n} };`,
+      options: [{ max: 5 }],
+      errors: [
+        { messageId: 'tooManyLines', data: { name: 'build', count: 8, max: 5 } },
+      ],
+    },
+    {
+      name: 'an arrow held in an object property is a named unit',
+      code: `const handlers = { build: (): void => {\n${body(6)}\n} };`,
       options: [{ max: 5 }],
       errors: [
         { messageId: 'tooManyLines', data: { name: 'build', count: 8, max: 5 } },
