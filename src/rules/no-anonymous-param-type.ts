@@ -47,20 +47,20 @@ const bindingOf = (param: TSESTree.Parameter): Binding | undefined => {
 const nameOf = (binding: Binding): string =>
   binding.type === AST_NODE_TYPES.Identifier ? binding.name : '(destructured)';
 
-/** The type nodes a shape can hide inside, one level down. */
-const reachableFrom = (node: TSESTree.TypeNode): TSESTree.TypeNode[] => {
-  switch (node.type) {
-    case AST_NODE_TYPES.TSTypeReference:
-      return node.typeArguments?.params ?? [];
-    case AST_NODE_TYPES.TSUnionType:
-    case AST_NODE_TYPES.TSIntersectionType:
-      return node.types;
-    case AST_NODE_TYPES.TSArrayType:
-      return [node.elementType];
-    default:
-      return [];
-  }
-};
+/**
+ * The type nodes a shape can hide inside, one level down. One row per kind of
+ * node; the kinds are exclusive, so at most one row contributes.
+ */
+const reachableFrom = (node: TSESTree.TypeNode): TSESTree.TypeNode[] => [
+  ...(node.type === AST_NODE_TYPES.TSTypeReference
+    ? (node.typeArguments?.params ?? [])
+    : []),
+  ...(node.type === AST_NODE_TYPES.TSUnionType ||
+  node.type === AST_NODE_TYPES.TSIntersectionType
+    ? node.types
+    : []),
+  ...(node.type === AST_NODE_TYPES.TSArrayType ? [node.elementType] : []),
+];
 
 /**
  * The first anonymous shape of at least `minMembers` properties reachable from

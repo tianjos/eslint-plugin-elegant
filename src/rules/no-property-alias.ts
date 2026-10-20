@@ -17,6 +17,20 @@ const isEnvRead = (node: TSESTree.MemberExpression): boolean =>
   node.object.property.type === AST_NODE_TYPES.Identifier &&
   node.object.property.name === 'env';
 
+/** A declaration binding a plain name to a property chain. */
+type PropertyRead = TSESTree.VariableDeclarator & {
+  id: TSESTree.Identifier;
+  init: TSESTree.MemberExpression;
+};
+
+/** `const total = order.total`: a name bound straight to a property of an object in hand. */
+const readsPropertyInHand = (
+  node: TSESTree.VariableDeclarator,
+): node is PropertyRead =>
+  node.id.type === AST_NODE_TYPES.Identifier &&
+  node.init?.type === AST_NODE_TYPES.MemberExpression &&
+  isObjectInHand(node.init);
+
 export default createRule<Options, MessageIds>({
   name: 'no-property-alias',
   meta: {
@@ -43,19 +57,7 @@ export default createRule<Options, MessageIds>({
   create(context, [{ allowEnv }]) {
     return {
       VariableDeclarator(node): void {
-        if (node.id.type !== AST_NODE_TYPES.Identifier) {
-          return;
-        }
-
-        if (
-          node.init === null ||
-          node.init.type !== AST_NODE_TYPES.MemberExpression ||
-          !isObjectInHand(node.init)
-        ) {
-          return;
-        }
-
-        if (allowEnv && isEnvRead(node.init)) {
+        if (!readsPropertyInHand(node) || (allowEnv && isEnvRead(node.init))) {
           return;
         }
 
