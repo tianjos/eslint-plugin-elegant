@@ -35,6 +35,13 @@ describe('plugin surface', () => {
     ).toEqual(['warn', { max: 50 }]);
   });
 
+  it('budgets parameters with its own max-params, leaving constructors to the class rules', () => {
+    const recommended = plugin.configs.recommended.rules ?? {};
+
+    expect(recommended['elegant/max-params']).toEqual(['warn', { max: 3 }]);
+    expect(recommended).not.toHaveProperty('max-params');
+  });
+
   it('errors on self-mutation and generic errors by default', () => {
     expect(plugin.configs.recommended.rules?.['elegant/no-self-mutation']).toBe(
       'error',
@@ -94,7 +101,7 @@ describe('plugin surface', () => {
         'elegant/no-null',
         'elegant/no-null-return',
         'elegant/no-type-assertion',
-        'max-params',
+        'elegant/max-params',
       ].sort(),
     );
     expect(Object.values(tests).every((severity) => severity === 'off')).toBe(

@@ -3,6 +3,7 @@ import noAnonymousParamType from './rules/no-anonymous-param-type';
 import noAnyReturn from './rules/no-any-return';
 import maxClassDependencies from './rules/max-class-dependencies';
 import maxMethodLines from './rules/max-method-lines';
+import maxParams from './rules/max-params';
 import maxClassFields from './rules/max-class-fields';
 import maxReturns from './rules/max-returns';
 import maxClassMethods from './rules/max-class-methods';
@@ -56,6 +57,7 @@ const rules = {
   'no-self-mutation': noSelfMutation,
   'no-generic-error': noGenericError,
   'max-method-lines': maxMethodLines,
+  'max-params': maxParams,
 };
 
 type Plugin = {
@@ -103,7 +105,7 @@ plugin.configs.recommended = {
     'elegant/no-self-mutation': 'error',
     'elegant/no-generic-error': 'error',
     'elegant/max-method-lines': ['warn', { max: 50 }],
-    'max-params': ['warn', { max: 3 }],
+    'elegant/max-params': ['warn', { max: 3 }],
     'no-else-return': ['error', { allowElseIf: false }],
   },
 };
@@ -178,7 +180,7 @@ plugin.configs.tests = {
     'elegant/no-generic-error': 'off',
     'elegant/no-boolean-param': 'off',
     'elegant/no-anonymous-param-type': 'off',
-    'max-params': 'off',
+    'elegant/max-params': 'off',
   },
 };
 

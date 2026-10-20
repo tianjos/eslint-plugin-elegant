@@ -1,4 +1,5 @@
 import { AST_NODE_TYPES, TSESLint, TSESTree } from '@typescript-eslint/utils';
+import { annotatedReference, isCollaborator } from '../utils/collaborators';
 import { createRule } from '../utils/createRule';
 
 type Options = [{ max: number; ignoreDecorated: boolean }];
@@ -23,12 +24,26 @@ const named = (
 ): string =>
   key.type === AST_NODE_TYPES.Identifier ? key.name : sourceCode.getText(key);
 
-/** Every property declared in the class body. */
+/**
+ * `private readonly logger = new Logger()` holds a collaborator, not state.
+ * `max-class-dependencies` already counts it from that same `new`, so counting
+ * the field as well would report one dependency on two axes.
+ */
+const holdsCollaborator = (
+  field: Field,
+  sourceCode: TSESLint.SourceCode,
+): boolean =>
+  field.value?.type === AST_NODE_TYPES.NewExpression &&
+  isCollaborator(field.value.callee, sourceCode);
+
+/** Every property declared in the class body that holds state. */
 const declared = (
   member: TSESTree.ClassElement,
   sourceCode: TSESLint.SourceCode,
 ): string[] =>
-  isField(member) && !member.static ? [named(member.key, sourceCode)] : [];
+  isField(member) && !member.static && !holdsCollaborator(member, sourceCode)
+    ? [named(member.key, sourceCode)]
+    : [];
 
 /**
  * The same, minus the decorated ones: `@Column`, `@IsString` and friends map a
@@ -44,9 +59,27 @@ const declaredUndecorated = (
     : declared(member, sourceCode);
 
 /**
- * Constructor parameter properties. `ignoreDecorated` deliberately does not
- * reach them: a decorator on a parameter is injection (`@Inject(TOKEN)`), so the
- * field is a genuine collaborator and has to stay inside the budget.
+ * A parameter property typed with a collaborator is an injected dependency,
+ * which `max-class-dependencies` budgets from the same annotation. One typed as
+ * a primitive or a built-in (`region: string`, `issuedAt: Date`) is state and
+ * stays here.
+ */
+const injectsCollaborator = (
+  param: TSESTree.Parameter,
+  sourceCode: TSESLint.SourceCode,
+): boolean => {
+  const annotation = annotatedReference(param);
+
+  return (
+    annotation !== undefined && isCollaborator(annotation.typeName, sourceCode)
+  );
+};
+
+/**
+ * Constructor parameter properties that hold state. `ignoreDecorated`
+ * deliberately does not reach them: a decorator on a parameter is injection
+ * (`@Inject(TOKEN)`), not mapping, so `@Inject(REGION) region: string` is state
+ * the class chose to carry and stays inside the budget.
  */
 const promoted = (
   member: TSESTree.ClassElement,
@@ -60,7 +93,8 @@ const promoted = (
   }
 
   return member.value.params.flatMap((param) =>
-    param.type === AST_NODE_TYPES.TSParameterProperty
+    param.type === AST_NODE_TYPES.TSParameterProperty &&
+    !injectsCollaborator(param, sourceCode)
       ? [named(param.parameter, sourceCode)]
       : [],
   );

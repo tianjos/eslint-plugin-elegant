@@ -78,7 +78,7 @@ A complete, copy-pasteable example (including those overrides) lives in
 ## Rules
 
 The plugin exports four configs. Two are presets — `recommended` and `starter`
-— carrying every rule below plus two native ones, [`max-params`](https://eslint.org/docs/latest/rules/max-params) and
+— carrying every rule below plus one native one,
 [`no-else-return`](https://eslint.org/docs/latest/rules/no-else-return):
 
 - **`recommended`** — the severities in the table below. What the plugin
@@ -96,7 +96,8 @@ The plugin exports four configs. Two are presets — `recommended` and `starter`
 | `elegant/no-boolean-param`             | custom | Boolean parameters (flag arguments) on functions, methods, and constructors     | `error`       |
 | `elegant/max-class-methods`            | custom | Classes with more methods than the configured `max` (constructors excluded)     | `warn` (max 10) |
 | `elegant/max-class-dependencies`       | custom | Classes depending on more distinct collaborators than `max` (constructor injections plus `new`) | `warn` (max 4) |
-| `elegant/max-class-fields`             | custom | Classes holding more instance fields than `max` (declared fields plus parameter properties) | `warn` (max 5) |
+| `elegant/max-class-fields`             | custom | Classes holding more instance fields than `max` (declared fields plus parameter properties, collaborators excepted) | `warn` (max 5) |
+| `elegant/max-params`                   | custom | Functions and methods declaring more than `max` parameters (constructors excepted) | `warn` (max 3) |
 | `elegant/no-type-assertion`            | custom | `value as T`, `<T>value`, and `value!` assertions (`as const` is allowed)       | `error`       |
 | `elegant/no-any-return`                | custom | `any` (or `Promise<any>`) declared as a function's return type                  | `error`       |
 | `elegant/no-null-return`               | custom | `return null` statements                                                        | `error`       |
@@ -116,7 +117,6 @@ The plugin exports four configs. Two are presets — `recommended` and `starter`
 | `elegant/no-self-mutation`             | custom | Writing to your own fields outside the constructor                              | `error`       |
 | `elegant/no-generic-error`             | custom | `throw new Error(...)` and the other built-in error types                       | `error`       |
 | `elegant/max-method-lines`             | custom | Named functions and methods longer than `max` lines                             | `warn` (max 50) |
-| `max-params`                           | native | Functions declaring more than `max` parameters                                  | `warn` (max 3) |
 | `no-else-return`                       | native | An `else` branch when the `then` branch always returns (`allowElseIf: false`)   | `error`       |
 
 ### Rule details
@@ -169,6 +169,30 @@ declared in the body — plain, `abstract`, or `accessor` — plus every constru
 parameter property. Methods and accessors belong to `max-class-methods`, and
 `static` members to `no-static-members`, so neither is counted here.
 
+**Collaborators are not state.** A parameter property typed with a type
+reference, and a field initialised with `new`, are exactly what
+`max-class-dependencies` counts, so they are left to it. Otherwise a handler
+with six injected repositories would be reported twice for one problem — once
+here with advice to group fields into a value object, which is the wrong fix
+for coupling. Primitives and the ambient built-ins (`Date`, `Map`, …) are
+values, so they stay in the budget:
+
+```ts
+class SettlementHandler {
+  private readonly logger = new Logger(SettlementHandler.name); // collaborator
+  private readonly seen = new Set<string>(); // counted
+  private status: Status; // counted
+
+  constructor(
+    private readonly ledger: LedgerRepository, // collaborator
+    private readonly region: string, // counted
+  ) {}
+}
+```
+
+A type passed to `max-class-dependencies`' `ignore` is still a collaborator —
+it is exempt from that budget, not promoted into this one.
+
 Decorated properties are skipped by default. `@Column`, `@IsString` and
 `@ApiProperty` map a field to a table or a payload, so a DTO or an ORM entity
 declares one field per column by design and has no business inside a budget:
@@ -181,16 +205,40 @@ class CreateOrderDto {
 ```
 
 **The exemption stops at the constructor.** A decorator on a parameter is
-injection, not mapping, so `@Inject(TOKEN) private readonly repo: Repo` stays
-inside the budget — otherwise a service wired entirely through tokens would
-count zero fields, which is exactly the class the rule exists to catch. Set
-`{ ignoreDecorated: false }` to budget mapped properties too.
+injection, not mapping, so `@Inject(REGION) private readonly region: string`
+stays inside the budget — otherwise configuration wired entirely through tokens
+would count zero fields. Set `{ ignoreDecorated: false }` to budget mapped
+properties too.
 
 Configurable via `{ max: number, ignoreDecorated: boolean }` (default `max: 5`,
-`ignoreDecorated: true`). The default leaves room for the four collaborators
-`max-class-dependencies` allows plus one field of genuine state; past that the
-two rules deliberately overlap, because a class over both budgets is over-sized
-on both axes.
+`ignoreDecorated: true`).
+
+#### `max-params`
+
+A function that needs four arguments is usually missing the name of the thing
+three of them describe. Counts declared parameters on functions, methods, and
+arrow functions; TypeScript's `this:` pseudo-parameter is not counted, because
+no caller passes it.
+
+**Constructors are not counted.** A constructor's parameters are the class's
+collaborators and state, which `max-class-dependencies` and `max-class-fields`
+already budget — with messages that name what to extract. ESLint's native
+`max-params` counts them too, so a Nest handler with five injections used to be
+reported three times, and a constructor at `max-class-dependencies`' limit of
+four was reported anyway, by a threshold of three meant for call sites. This
+rule replaces the native one in both presets.
+
+If you configured the native rule yourself, move the options over and drop the
+native entry, or constructors are counted again:
+
+```js
+// before
+'max-params': ['warn', { max: 4 }],
+// after
+'elegant/max-params': ['warn', { max: 4 }],
+```
+
+Configurable via `{ max: number }` (default `3`).
 
 #### `no-type-assertion`
 
@@ -858,8 +906,8 @@ rather than an `error`, like the other thresholds.
 
 ### Overriding thresholds
 
-`max-class-methods`, `max-class-dependencies`, `max-class-fields`, and the
-native `max-params` all take a `max` option:
+`max-class-methods`, `max-class-dependencies`, `max-class-fields`, and
+`max-params` all take a `max` option:
 
 ```js
 rules: {
@@ -867,7 +915,7 @@ rules: {
   'elegant/max-class-methods': ['warn', { max: 15 }],
   'elegant/max-class-dependencies': ['warn', { max: 6 }],
   'elegant/max-class-fields': ['warn', { max: 8 }],
-  'max-params': ['warn', { max: 4 }],
+  'elegant/max-params': ['warn', { max: 4 }],
 }
 ```
 
@@ -908,6 +956,10 @@ built for:
 | `no-else-return` | `error` | 13 | 0.01 | 0 |
 | `no-else-after-throw` | `error` | 8 | 0.01 | 0 |
 | **Total** | | **11,603** | **9.20** | |
+
+The `max-params` row was measured with ESLint's native rule, which counted
+constructors; `elegant/max-params` leaves those to the class rules and reports
+less.
 
 Four rules account for 81% of it, and they are the four whose principle has a
 boundary this plugin cannot see. `no-comments-in-function-body` asks you to
