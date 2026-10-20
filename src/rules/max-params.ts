@@ -1,15 +1,11 @@
 import { AST_NODE_TYPES, TSESTree } from '@typescript-eslint/utils';
 import { createRule } from '../utils/createRule';
+import { FunctionLike, functionName } from '../utils/functionName';
 
 type Options = [{ max: number }];
 type MessageIds = 'tooManyParams';
 
 const DEFAULT_MAX = 3;
-
-type FunctionNode =
-  | TSESTree.ArrowFunctionExpression
-  | TSESTree.FunctionDeclaration
-  | TSESTree.FunctionExpression;
 
 /**
  * A constructor's parameters are the class's collaborators and state, which
@@ -17,33 +13,13 @@ type FunctionNode =
  * that name what to extract. Counting them here as well would report one
  * constructor three times over, with three different pieces of advice.
  */
-const isConstructor = (node: FunctionNode): boolean =>
+const isConstructor = (node: FunctionLike): boolean =>
   node.parent.type === AST_NODE_TYPES.MethodDefinition &&
   node.parent.kind === 'constructor';
 
 /** TypeScript's `this:` pseudo-parameter types the receiver; nobody passes it. */
 const isThisParameter = (param: TSESTree.Parameter): boolean =>
   param.type === AST_NODE_TYPES.Identifier && param.name === 'this';
-
-/** The name a method, property, or variable gives the function it holds. */
-const holderName = (holder: TSESTree.Node): TSESTree.Identifier | undefined => {
-  if (
-    (holder.type === AST_NODE_TYPES.MethodDefinition ||
-      holder.type === AST_NODE_TYPES.Property) &&
-    holder.key.type === AST_NODE_TYPES.Identifier
-  ) {
-    return holder.key;
-  }
-
-  return holder.type === AST_NODE_TYPES.VariableDeclarator &&
-    holder.id.type === AST_NODE_TYPES.Identifier
-    ? holder.id
-    : undefined;
-};
-
-/** The identifier a reader knows the function by, if it has one. */
-const nameOf = (node: FunctionNode): TSESTree.Identifier | undefined =>
-  node.id ?? holderName(node.parent);
 
 export default createRule<Options, MessageIds>({
   name: 'max-params',
@@ -67,7 +43,7 @@ export default createRule<Options, MessageIds>({
   },
   defaultOptions: [{ max: DEFAULT_MAX }],
   create(context, [{ max }]) {
-    const measure = (node: FunctionNode): void => {
+    const measure = (node: FunctionLike): void => {
       if (isConstructor(node)) {
         return;
       }
@@ -80,7 +56,7 @@ export default createRule<Options, MessageIds>({
         return;
       }
 
-      const name = nameOf(node);
+      const name = functionName(node);
 
       context.report({
         node: name ?? node,

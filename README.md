@@ -940,10 +940,13 @@ callback is a different question and belongs to a different rule.
 A port of Checkstyle's `MethodLength`, which qulice runs. Measured from the
 signature to the closing brace, so the declaration and the blank lines that
 separate the body's paragraphs count — they are part of what a reader has to
-hold.
+hold. Decorators above a method annotate it and are not counted.
 
-Named units are measured: methods, function declarations, and a function or
-arrow bound to a `const`. An inline callback is **not** measured on its own,
+Named units are measured, whatever syntax names them: methods, function
+declarations, an arrow held in a class field (`build = () => { ... }`), a
+method or arrow in an object literal, and a function or arrow bound to a
+`const`. A computed key (`[key]() {}`) is an expression rather than a name, so
+it is measured through its host. An inline callback is **not** measured on its own,
 because a long callback already makes its host long and the host is what gets
 reported. Configurable via `{ max: number }` (default `50`), and a `warn`
 rather than an `error`, like the other thresholds.

@@ -59,6 +59,36 @@ ruleTester.run('max-params', rule, {
       ],
     },
     {
+      name: 'an arrow held in a class field is reported by that field',
+      code: 'class Handler { handle = (a: A, b: B, c: C, d: D) => a; }',
+      errors: [
+        {
+          messageId: 'tooManyParams',
+          data: { name: 'handle', count: 4, max: 3 },
+        },
+      ],
+    },
+    {
+      name: 'a method in an object literal is reported by its key',
+      code: 'const handlers = { settle(a: A, b: B, c: C, d: D) {} };',
+      errors: [
+        {
+          messageId: 'tooManyParams',
+          data: { name: 'settle', count: 4, max: 3 },
+        },
+      ],
+    },
+    {
+      name: 'a computed key is an expression, not a name',
+      code: 'class Handler { [key](a: A, b: B, c: C, d: D) {} }',
+      errors: [
+        {
+          messageId: 'tooManyParams',
+          data: { name: '(anonymous)', count: 4, max: 3 },
+        },
+      ],
+    },
+    {
       name: 'an anonymous callback over the limit',
       code: 'run((a: A, b: B, c: C, d: D) => a);',
       errors: [
