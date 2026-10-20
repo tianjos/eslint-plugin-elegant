@@ -1,27 +1,11 @@
 import { AST_NODE_TYPES, TSESLint, TSESTree } from '@typescript-eslint/utils';
+import { annotatedReference, BUILT_INS } from '../utils/collaborators';
 import { createRule } from '../utils/createRule';
 
 type Options = [{ max: number; ignore: string[] }];
 type MessageIds = 'tooManyDependencies';
 
 const DEFAULT_MAX = 4;
-
-/**
- * Ambient types every codebase reaches for. Instantiating a `Date` or a `Map` is
- * not a design decision worth budgeting, so they never count as collaborators.
- */
-const BUILT_INS = [
-  'Array',
-  'Date',
-  'Error',
-  'Map',
-  'Promise',
-  'RegExp',
-  'Set',
-  'URL',
-  'WeakMap',
-  'WeakSet',
-];
 
 /**
  * `key` identifies the collaborator for de-duplication and carries its type
@@ -44,20 +28,16 @@ const injected = (
   );
 
   return (constructor?.value.params ?? []).flatMap((param) => {
-    const target =
-      param.type === AST_NODE_TYPES.TSParameterProperty
-        ? param.parameter
-        : param;
-    const annotation = target.typeAnnotation?.typeAnnotation;
+    const annotation = annotatedReference(param);
 
-    return annotation?.type === AST_NODE_TYPES.TSTypeReference
-      ? [
+    return annotation === undefined
+      ? []
+      : [
           {
             key: sourceCode.getText(annotation),
             root: sourceCode.getText(annotation.typeName),
           },
-        ]
-      : [];
+        ];
   });
 };
 

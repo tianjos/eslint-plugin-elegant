@@ -25,7 +25,7 @@ export default [
       // 'elegant/max-class-methods': ['warn', { max: 15 }],
       // 'elegant/max-class-dependencies': ['warn', { max: 6, ignore: ['Logger'] }],
       // 'elegant/max-class-fields': ['warn', { max: 8 }],
-      // 'max-params': ['warn', { max: 4 }],
+      // 'elegant/max-params': ['warn', { max: 4 }],
       //
       // Some classes are nominal and offer no discriminant — a framework
       // exception, an Error subclass. `no-instanceof` already lets a declared
