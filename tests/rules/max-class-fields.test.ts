@@ -35,6 +35,26 @@ ruleTester.run('max-class-fields', rule, {
       code: 'class OrderService { private readonly logger = new Logger(OrderService.name); private status: Status; }',
       options: [{ max: 1 }],
     },
+    {
+      name: 'a readonly enum tag is the same for every instance, so it is not state',
+      code: 'class CurrentCommissionOrigin { readonly commissionType = CommissionType.CURRENT; readonly id: string; }',
+      options: [{ max: 1 }],
+    },
+    {
+      name: 'a readonly literal tag is not state',
+      code: "class Settled { readonly kind = 'settled'; readonly at: Date; }",
+      options: [{ max: 1 }],
+    },
+    {
+      name: 'a readonly literal tag narrowed with as const is not state',
+      code: "class Settled { readonly kind = 'settled' as const; readonly at: Date; }",
+      options: [{ max: 1 }],
+    },
+    {
+      name: 'a readonly negative constant is not state',
+      code: 'class Unbounded { readonly limit = -1; readonly id: string; }',
+      options: [{ max: 1 }],
+    },
   ],
   invalid: [
     {
@@ -79,6 +99,61 @@ ruleTester.run('max-class-fields', rule, {
         {
           messageId: 'tooManyFields',
           data: { name: 'Handler', count: 2, max: 1, names: 'status, region' },
+        },
+      ],
+    },
+    {
+      name: 'a constant a field merely starts from is state, because it can change',
+      code: "class Order { status = 'PENDING'; readonly id: string; }",
+      options: [{ max: 1 }],
+      errors: [
+        {
+          messageId: 'tooManyFields',
+          data: { name: 'Order', count: 2, max: 1, names: 'status, id' },
+        },
+      ],
+    },
+    {
+      name: 'a readonly field computed per instance is state',
+      code: 'class Order { readonly id = randomUUID(); readonly placedAt = Date.now(); }',
+      options: [{ max: 1 }],
+      errors: [
+        {
+          messageId: 'tooManyFields',
+          data: { name: 'Order', count: 2, max: 1, names: 'id, placedAt' },
+        },
+      ],
+    },
+    {
+      name: 'a readonly field read off the instance is state',
+      code: 'class Client { readonly region = this.config.region; readonly id: string; }',
+      options: [{ max: 1 }],
+      errors: [
+        {
+          messageId: 'tooManyFields',
+          data: { name: 'Client', count: 2, max: 1, names: 'region, id' },
+        },
+      ],
+    },
+    {
+      name: 'a readonly regular expression is state, because it carries lastIndex',
+      code: 'class Scanner { readonly token = /\\w+/g; readonly id: string; }',
+      options: [{ max: 1 }],
+      errors: [
+        {
+          messageId: 'tooManyFields',
+          data: { name: 'Scanner', count: 2, max: 1, names: 'token, id' },
+        },
+      ],
+    },
+    {
+      name: 'a readonly collection literal is state, because its contents change',
+      code: 'class Basket { readonly items = []; readonly id: string; }',
+      options: [{ max: 1 }],
+      errors: [
+        {
+          messageId: 'tooManyFields',
+          data: { name: 'Basket', count: 2, max: 1, names: 'items, id' },
         },
       ],
     },

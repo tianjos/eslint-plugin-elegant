@@ -1,4 +1,5 @@
 import { AST_NODE_TYPES, TSESLint, TSESTree } from '@typescript-eslint/utils';
+import { isAsConst } from '../utils/asConst';
 import { annotatedReference, isCollaborator } from '../utils/collaborators';
 import { createRule } from '../utils/createRule';
 
@@ -36,12 +37,47 @@ const holdsCollaborator = (
   field.value?.type === AST_NODE_TYPES.NewExpression &&
   isCollaborator(field.value.callee, sourceCode);
 
+/** `CommissionType.CURRENT`: a plain `.member` run rooted at a bare name. */
+const isEnumMember = (node: TSESTree.Node): boolean =>
+  node.type === AST_NODE_TYPES.MemberExpression &&
+  !node.computed &&
+  (node.object.type === AST_NODE_TYPES.Identifier ||
+    isEnumMember(node.object));
+
+/**
+ * An expression with the same value for every instance. A regular expression
+ * literal is left out on purpose: with the `g` or `y` flag it carries
+ * `lastIndex`, which is state.
+ */
+const isConstant = (node: TSESTree.Expression): boolean =>
+  (node.type === AST_NODE_TYPES.Literal && !('regex' in node)) ||
+  (node.type === AST_NODE_TYPES.TemplateLiteral &&
+    node.expressions.length === 0) ||
+  (node.type === AST_NODE_TYPES.UnaryExpression &&
+    node.argument.type === AST_NODE_TYPES.Literal) ||
+  isEnumMember(node) ||
+  (node.type === AST_NODE_TYPES.TSAsExpression &&
+    isAsConst(node) &&
+    isConstant(node.expression));
+
+/**
+ * `readonly commissionType = CommissionType.CURRENT` is a discriminant: it
+ * holds the same value in every instance, so it describes the class rather
+ * than the object, and exists for a union to narrow on. Without `readonly` the
+ * constant is only where the field starts, and the field is state.
+ */
+const isTag = (field: Field): boolean =>
+  field.readonly && field.value !== null && isConstant(field.value);
+
 /** Every property declared in the class body that holds state. */
 const declared = (
   member: TSESTree.ClassElement,
   sourceCode: TSESLint.SourceCode,
 ): string[] =>
-  isField(member) && !member.static && !holdsCollaborator(member, sourceCode)
+  isField(member) &&
+  !member.static &&
+  !isTag(member) &&
+  !holdsCollaborator(member, sourceCode)
     ? [named(member.key, sourceCode)]
     : [];
 
