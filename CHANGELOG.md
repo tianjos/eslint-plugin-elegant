@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.12.1](https://github.com/tianjos/eslint-plugin-elegant/compare/v0.12.0...v0.12.1) (2026-10-20)
+
+### Bug Fixes
+
+* **max-params:** report an arrow held in a class field by the field's name instead of `(anonymous)`, and stop reporting a computed key (`[key]() {}`) as if it were a name ([8e51169](https://github.com/tianjos/eslint-plugin-elegant/commit/8e51169569e6df29d2223df660ac3ff9682b0bb1))
+* **max-method-lines:** measure arrows held in class fields and methods or arrows in object literals, which were never measured; decorator lines above a method no longer count towards its length ([8e51169](https://github.com/tianjos/eslint-plugin-elegant/commit/8e51169569e6df29d2223df660ac3ff9682b0bb1))
+
+Upgrading may surface `max-method-lines` warnings on long methods written as
+class-field arrows or object-literal methods; they were over the limit before,
+just unmeasured.
+
 ## [0.12.0](https://github.com/tianjos/eslint-plugin-elegant/compare/v0.11.0...v0.12.0) (2026-10-20)
 
 ### ⚠ BREAKING CHANGES
