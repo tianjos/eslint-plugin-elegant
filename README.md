@@ -106,7 +106,7 @@ The plugin exports four configs. Two are presets — `recommended` and `starter`
 | `elegant/no-getters-setters`           | custom | `get`/`set` accessors (and `getX`/`setX` methods with `{ methods: true }`)        | `error`       |
 | `elegant/no-instanceof`                | custom | Use of the `instanceof` operator                                                | `error`       |
 | `elegant/no-static-members`            | custom | Static methods, properties, accessors, and blocks (secondary constructors and Nest module factories excepted) | `error` |
-| `elegant/no-null`                      | custom | The `null` literal as a value (type annotations and direct `return null` excepted) | `error`     |
+| `elegant/no-null`                      | custom | The `null` literal as a value (type annotations, direct `return null`, and comparisons inside a declared type guard excepted) | `error`     |
 | `elegant/no-comments-in-function-body` | custom | Comments inside function bodies (directives and empty blocks excepted)          | `error`       |
 | `elegant/no-else-after-throw`          | custom | An `else` branch when the `then` branch always throws                           | `error`       |
 | `elegant/no-interpolated-log-message`  | custom | Log messages built by interpolation or concatenation                            | `error`       |
@@ -554,6 +554,33 @@ or `undefined`. `null` in type positions (`string | null`) and a direct
 `return null` (owned by `no-null-return`) are left alone. This is strict and will
 flag idioms like `JSON.stringify(x, null, 2)` — relax it in the files where you
 interoperate with null-based APIs.
+
+**A declared type guard may compare against `null`.** A column, a payload or a
+third-party SDK hands you `T | null` whatever the domain prefers, and the check
+has to happen somewhere. Inside a function that declares `value is T` or
+`asserts value is T`, comparing with `null` narrows it away: the answer leaves
+as a type with no `null` in it, and the project ends up with one named guard
+instead of the comparison repeated mid-method. It is the same exemption
+`no-instanceof` makes, for the same reason.
+
+Only the comparison is exempt, not the literal. A guard that produces `null`
+is reported like any other code, and only the innermost function counts, so a
+callback inside a guard does not inherit it. Off via
+`{ allowTypeGuards: false }`.
+
+```ts
+// allowed
+const isPresent = <T>(value: T | null): value is T => value !== null;
+
+function assertDisbursed(row: ContractRow): asserts row is DisbursedRow {
+  if (row.disbursedAt === null) {
+    throw new ContractNotDisbursedError(row.id);
+  }
+}
+
+// reported: the function answers with a bare boolean, not a type
+const isMissing = (row: ContractRow): boolean => row.disbursedAt === null;
+```
 
 #### `no-comments-in-function-body`
 
