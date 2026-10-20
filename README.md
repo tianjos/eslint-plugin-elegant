@@ -96,7 +96,7 @@ The plugin exports four configs. Two are presets — `recommended` and `starter`
 | `elegant/no-boolean-param`             | custom | Boolean parameters (flag arguments) on functions, methods, and constructors     | `error`       |
 | `elegant/max-class-methods`            | custom | Classes with more methods than the configured `max` (constructors excluded)     | `warn` (max 10) |
 | `elegant/max-class-dependencies`       | custom | Classes depending on more distinct collaborators than `max` (constructor injections plus `new`) | `warn` (max 4) |
-| `elegant/max-class-fields`             | custom | Classes holding more instance fields than `max` (declared fields plus parameter properties, collaborators excepted) | `warn` (max 5) |
+| `elegant/max-class-fields`             | custom | Classes holding more instance fields than `max` (declared fields plus parameter properties; collaborators and constant tags excepted) | `warn` (max 5) |
 | `elegant/max-params`                   | custom | Functions and methods declaring more than `max` parameters (constructors excepted) | `warn` (max 3) |
 | `elegant/no-type-assertion`            | custom | `value as T`, `<T>value`, and `value!` assertions (`as const` is allowed)       | `error`       |
 | `elegant/no-any-return`                | custom | `any` (or `Promise<any>`) declared as a function's return type                  | `error`       |
@@ -192,6 +192,25 @@ class SettlementHandler {
 
 A type passed to `max-class-dependencies`' `ignore` is still a collaborator —
 it is exempt from that budget, not promoted into this one.
+
+**Discriminant tags are not state either.** A `readonly` field initialised with
+a constant — a literal, an enum member, `'x' as const` — holds the same value in
+every instance. It describes the class, not the object, and exists for a union
+to narrow on, so grouping it into a value object would be advice with nowhere
+to go:
+
+```ts
+class CurrentCommissionOrigin {
+  readonly commissionType = CommissionType.CURRENT; // not counted
+  readonly id: string; // counted
+}
+
+class Order {
+  status = 'PENDING'; // counted: without `readonly` the constant is only where it starts
+  readonly id = randomUUID(); // counted: computed per instance
+  readonly pattern = /\w+/g; // counted: a regular expression carries `lastIndex`
+}
+```
 
 Decorated properties are skipped by default. `@Column`, `@IsString` and
 `@ApiProperty` map a field to a table or a payload, so a DTO or an ORM entity

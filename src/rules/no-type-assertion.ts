@@ -1,12 +1,8 @@
 import { AST_NODE_TYPES, TSESTree } from '@typescript-eslint/utils';
+import { isAsConst } from '../utils/asConst';
 import { createRule } from '../utils/createRule';
 
 type MessageIds = 'noAssertion' | 'nonNullAssertion';
-
-const isAsConst = (node: TSESTree.TSAsExpression): boolean =>
-  node.typeAnnotation.type === AST_NODE_TYPES.TSTypeReference &&
-  node.typeAnnotation.typeName.type === AST_NODE_TYPES.Identifier &&
-  node.typeAnnotation.typeName.name === 'const';
 
 export default createRule<[], MessageIds>({
   name: 'no-type-assertion',
