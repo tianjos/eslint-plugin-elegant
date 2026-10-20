@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.12.0](https://github.com/tianjos/eslint-plugin-elegant/compare/v0.11.0...v0.12.0) (2026-10-20)
+
+### ⚠ BREAKING CHANGES
+
+* recommended and tests now configure elegant/max-params
+  instead of ESLint's native max-params. A consumer who sets native
+  max-params options gets constructors counted again; move the options to
+  'elegant/max-params' and drop the native entry.
+
+### Features
+
+* **max-params:** add `elegant/max-params`, which leaves constructors to the class-size rules and does not count TypeScript's `this:` parameter; `max-class-fields` no longer counts collaborators (parameter properties typed with a type reference, fields initialised with `new`) ([77dd45d](https://github.com/tianjos/eslint-plugin-elegant/commit/77dd45dc2a3be35186346c6b77d9cd5b5b4e3c08))
+* **max-class-fields:** stop counting `readonly` fields initialised with a constant, such as a discriminant tag (`readonly kind = Kind.CURRENT`) ([ea12e53](https://github.com/tianjos/eslint-plugin-elegant/commit/ea12e53eb296fa4b555cee96ba196826ca4bbc1f))
+* **no-null:** allow comparing with `null` inside a function that declares `value is T` or `asserts value is T`; off via `{ allowTypeGuards: false }` ([d6c4119](https://github.com/tianjos/eslint-plugin-elegant/commit/d6c411959782d45872fd19541b66392cdff9615b))
+
+Upgrading a NestJS codebase: one constructor with many injections used to be
+reported by `max-params`, `max-class-fields` and `max-class-dependencies` at
+once. It is now reported only by `max-class-dependencies`, which names the
+types to extract. An override that switched all three off for DI classes can
+usually drop the first two.
+
 ## [0.11.0](https://github.com/tianjos/eslint-plugin-elegant/compare/v0.10.1...v0.11.0) (2026-10-15)
 
 ### Bug Fixes
