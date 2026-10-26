@@ -18,6 +18,7 @@ import noNull from './rules/no-null';
 import noGenericError from './rules/no-generic-error';
 import noNullReturn from './rules/no-null-return';
 import noSelfMutation from './rules/no-self-mutation';
+import noPrimitiveObsession from './rules/no-primitive-obsession';
 import noPropertyAlias from './rules/no-property-alias';
 import noPropertyDestructuring from './rules/no-property-destructuring';
 import noPublicMutableProps from './rules/no-public-mutable-props';
@@ -58,6 +59,7 @@ const rules = {
   'no-generic-error': noGenericError,
   'max-method-lines': maxMethodLines,
   'max-params': maxParams,
+  'no-primitive-obsession': noPrimitiveObsession,
 };
 
 type Plugin = {
@@ -106,6 +108,7 @@ plugin.configs.recommended = {
     'elegant/no-generic-error': 'error',
     'elegant/max-method-lines': ['warn', { max: 50 }],
     'elegant/max-params': ['warn', { max: 3 }],
+    'elegant/no-primitive-obsession': 'error',
     'no-else-return': ['error', { allowElseIf: false }],
   },
 };
@@ -158,11 +161,13 @@ plugin.configs.off = {
  * The rules a spec legitimately trips, off — and only those.
  *
  * Which ones those are is a measurement, not a taste: over the corpus in
- * "Adopting on an existing codebase", these eight are the rules that fire
+ * "Adopting on an existing codebase", these nine are the rules that fire
  * inside test files, each for a reason that holds there and nowhere else. A
  * mock has to assert a type over a partial object, a fixture mirrors a
  * nullable column, `make*(withRefunds: true)` names the scenario under test,
- * and a spec narrates.
+ * and a spec narrates. A spec asserts what a value object
+ * unwraps to, `Competence.create('2026-04').toString()`, which is how a value
+ * object is tested.
  *
  * The rules kept out of this list are kept out on purpose. `max-class-fields`,
  * `max-returns`, `no-static-members` and the rest report zero times in specs
@@ -181,6 +186,7 @@ plugin.configs.tests = {
     'elegant/no-boolean-param': 'off',
     'elegant/no-anonymous-param-type': 'off',
     'elegant/max-params': 'off',
+    'elegant/no-primitive-obsession': 'off',
   },
 };
 

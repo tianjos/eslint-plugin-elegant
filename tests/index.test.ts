@@ -42,6 +42,12 @@ describe('plugin surface', () => {
     expect(recommended).not.toHaveProperty('max-params');
   });
 
+  it('errors on primitive obsession by default, with nothing to configure', () => {
+    expect(
+      plugin.configs.recommended.rules?.['elegant/no-primitive-obsession'],
+    ).toBe('error');
+  });
+
   it('errors on self-mutation and generic errors by default', () => {
     expect(plugin.configs.recommended.rules?.['elegant/no-self-mutation']).toBe(
       'error',
@@ -89,7 +95,7 @@ describe('plugin surface', () => {
     );
   });
 
-  it('offers a tests config that silences the eight rules specs legitimately trip', () => {
+  it('offers a tests config that silences the nine rules specs legitimately trip', () => {
     const tests = plugin.configs.tests.rules ?? {};
 
     expect(Object.keys(tests).sort()).toEqual(
@@ -102,6 +108,7 @@ describe('plugin surface', () => {
         'elegant/no-null-return',
         'elegant/no-type-assertion',
         'elegant/max-params',
+        'elegant/no-primitive-obsession',
       ].sort(),
     );
     expect(Object.values(tests).every((severity) => severity === 'off')).toBe(
