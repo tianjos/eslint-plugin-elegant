@@ -93,36 +93,36 @@ The plugin exports four configs. Two are presets — `recommended` and `starter`
 
 | Rule                                   | Source | What it catches                                                                 | `recommended` |
 | -------------------------------------- | ------ | ------------------------------------------------------------------------------- | ------------- |
-| `elegant/no-boolean-param`             | custom | Boolean parameters (flag arguments) on functions, methods, and constructors     | `error`       |
-| `elegant/max-class-methods`            | custom | Classes with more methods than the configured `max` (constructors excluded)     | `warn` (max 10) |
-| `elegant/max-class-dependencies`       | custom | Classes depending on more distinct collaborators than `max` (constructor injections plus `new`) | `warn` (max 4) |
-| `elegant/max-class-fields`             | custom | Classes holding more instance fields than `max` (declared fields plus parameter properties; collaborators and constant tags excepted) | `warn` (max 5) |
-| `elegant/max-params`                   | custom | Functions and methods declaring more than `max` parameters (constructors excepted) | `warn` (max 3) |
-| `elegant/no-type-assertion`            | custom | `value as T`, `<T>value`, and `value!` assertions (`as const` is allowed)       | `error`       |
-| `elegant/no-any-return`                | custom | `any` (or `Promise<any>`) declared as a function's return type                  | `error`       |
-| `elegant/no-null-return`               | custom | `return null` statements                                                        | `error`       |
-| `elegant/no-public-mutable-props`      | custom | Public, non-`readonly` class properties and public constructor parameter props  | `error`       |
-| `elegant/no-logic-in-constructor`      | custom | Any constructor code beyond `this.field = value` stores and a `super(...)` call  | `error`       |
-| `elegant/no-getters-setters`           | custom | `get`/`set` accessors (and `getX`/`setX` methods with `{ methods: true }`)        | `error`       |
-| `elegant/no-instanceof`                | custom | Use of the `instanceof` operator                                                | `error`       |
-| `elegant/no-static-members`            | custom | Static methods, properties, accessors, and blocks (secondary constructors and Nest module factories excepted) | `error` |
-| `elegant/no-null`                      | custom | The `null` literal as a value (type annotations, direct `return null`, and comparisons inside a declared type guard excepted) | `error`     |
-| `elegant/no-comments-in-function-body` | custom | Comments inside function bodies (directives and empty blocks excepted)          | `error`       |
-| `elegant/no-else-after-throw`          | custom | An `else` branch when the `then` branch always throws                           | `error`       |
-| `elegant/no-interpolated-log-message`  | custom | Log messages built by interpolation or concatenation                            | `error`       |
-| `elegant/max-returns`                  | custom | Functions returning from more places than `max`                                 | `warn` (max 3) |
-| `elegant/no-property-alias`            | custom | Locals that only rename a property of an object already in hand                 | `error`       |
-| `elegant/no-property-destructuring`    | custom | Destructuring an object already in hand into locals                             | `error`       |
-| `elegant/no-anonymous-param-type`      | custom | Parameters typed as an anonymous shape of `minMembers` or more properties        | `error` (minMembers 2) |
-| `elegant/no-self-mutation`             | custom | Writing to your own fields outside the constructor                              | `error`       |
-| `elegant/no-generic-error`             | custom | `throw new Error(...)` and the other built-in error types                       | `error`       |
-| `elegant/max-method-lines`             | custom | Named functions and methods longer than `max` lines                             | `warn` (max 50) |
-| `elegant/no-primitive-obsession`       | custom | Primitives the code itself turns into a value object: parameters wrapped outside a factory, state wrapped on read, values built to be unwrapped | `error` |
-| `elegant/no-bare-collection`           | custom | Arrays of domain types in return types, parameters and type properties, outside the class that owns them | `error` |
-| `elegant/no-collection-internals`      | custom | Positional reads and `map`/`filter`/`reduce`/... over a collection that is not the class's own state | `error` |
-| `elegant/no-anemic-type`               | custom | Data types that `minFunctions` or more free functions in the same file take as their first parameter | `warn` (minFunctions 2) |
-| `elegant/no-trivial-constant`          | custom | Module constants that only name an empty collection or a value object built from literals | `error` |
-| `no-else-return`                       | native | An `else` branch when the `then` branch always returns (`allowElseIf: false`)   | `error`       |
+| [`elegant/no-boolean-param`](#no-boolean-param) | custom | Boolean parameters (flag arguments) on functions, methods, and constructors     | `error`       |
+| [`elegant/max-class-methods`](#max-class-methods) | custom | Classes with more methods than the configured `max` (constructors excluded)     | `warn` (max 10) |
+| [`elegant/max-class-dependencies`](#max-class-dependencies) | custom | Classes depending on more distinct collaborators than `max` (constructor injections plus `new`) | `warn` (max 4) |
+| [`elegant/max-class-fields`](#max-class-fields) | custom | Classes holding more instance fields than `max` (declared fields plus parameter properties; collaborators and constant tags excepted) | `warn` (max 5) |
+| [`elegant/max-params`](#max-params) | custom | Functions and methods declaring more than `max` parameters (constructors excepted) | `warn` (max 3) |
+| [`elegant/no-type-assertion`](#no-type-assertion) | custom | `value as T`, `<T>value`, and `value!` assertions (`as const` is allowed)       | `error`       |
+| [`elegant/no-any-return`](#no-any-return) | custom | `any` (or `Promise<any>`) declared as a function's return type                  | `error`       |
+| [`elegant/no-null-return`](#no-null-return) | custom | `return null` statements                                                        | `error`       |
+| [`elegant/no-public-mutable-props`](#no-public-mutable-props) | custom | Public, non-`readonly` class properties and public constructor parameter props  | `error`       |
+| [`elegant/no-logic-in-constructor`](#no-logic-in-constructor) | custom | Any constructor code beyond `this.field = value` stores and a `super(...)` call  | `error`       |
+| [`elegant/no-getters-setters`](#no-getters-setters) | custom | `get`/`set` accessors (and `getX`/`setX` methods with `{ methods: true }`)        | `error`       |
+| [`elegant/no-instanceof`](#no-instanceof) | custom | Use of the `instanceof` operator                                                | `error`       |
+| [`elegant/no-static-members`](#no-static-members) | custom | Static methods, properties, accessors, and blocks (secondary constructors and Nest module factories excepted) | `error` |
+| [`elegant/no-null`](#no-null) | custom | The `null` literal as a value (type annotations, direct `return null`, and comparisons inside a declared type guard excepted) | `error`     |
+| [`elegant/no-comments-in-function-body`](#no-comments-in-function-body) | custom | Comments inside function bodies (directives and empty blocks excepted)          | `error`       |
+| [`elegant/no-else-after-throw`](#no-else-after-throw) | custom | An `else` branch when the `then` branch always throws                           | `error`       |
+| [`elegant/no-interpolated-log-message`](#no-interpolated-log-message) | custom | Log messages built by interpolation or concatenation                            | `error`       |
+| [`elegant/max-returns`](#max-returns) | custom | Functions returning from more places than `max`                                 | `warn` (max 3) |
+| [`elegant/no-property-alias`](#no-property-alias) | custom | Locals that only rename a property of an object already in hand                 | `error`       |
+| [`elegant/no-property-destructuring`](#no-property-destructuring) | custom | Destructuring an object already in hand into locals                             | `error`       |
+| [`elegant/no-anonymous-param-type`](#no-anonymous-param-type) | custom | Parameters typed as an anonymous shape of `minMembers` or more properties        | `error` (minMembers 2) |
+| [`elegant/no-self-mutation`](#no-self-mutation) | custom | Writing to your own fields outside the constructor                              | `error`       |
+| [`elegant/no-generic-error`](#no-generic-error) | custom | `throw new Error(...)` and the other built-in error types                       | `error`       |
+| [`elegant/max-method-lines`](#max-method-lines) | custom | Named functions and methods longer than `max` lines                             | `warn` (max 50) |
+| [`elegant/no-primitive-obsession`](#no-primitive-obsession) | custom | Primitives the code itself turns into a value object: parameters wrapped outside a factory, state wrapped on read, values built to be unwrapped | `error` |
+| [`elegant/no-bare-collection`](#no-bare-collection) | custom | Arrays of domain types in return types, parameters and type properties, outside the class that owns them | `error` |
+| [`elegant/no-collection-internals`](#no-collection-internals) | custom | Positional reads and `map`/`filter`/`reduce`/... over a collection that is not the class's own state | `error` |
+| [`elegant/no-anemic-type`](#no-anemic-type) | custom | Data types that `minFunctions` or more free functions in the same file take as their first parameter | `warn` (minFunctions 2) |
+| [`elegant/no-trivial-constant`](#no-trivial-constant) | custom | Module constants that only name an empty collection or a value object built from literals | `error` |
+| [`no-else-return`](#no-else-return) | native | An `else` branch when the `then` branch always returns (`allowElseIf: false`)   | `error`       |
 
 ### Rule details
 
@@ -132,10 +132,34 @@ A boolean argument almost always means the callee does two things. Prefer two
 intention-revealing functions or an options object. Flags both annotated
 (`flag: boolean`) and boolean-defaulted (`flag = false`) parameters.
 
+```ts
+// before: the flag picks which of two functions runs
+exportWorkbook(origin: CommissionOrigin, withAdjustments: boolean): Workbook {}
+exportWorkbook(origin, true);
+
+// after: two names, one job each, and a call site that reads
+exportWorkbook(origin: CommissionOrigin): Workbook {}
+exportWorkbookWithAdjustments(origin: CommissionOrigin): Workbook {}
+```
+
 #### `max-class-methods`
 
 A proxy for the Single Responsibility Principle. Constructors are not counted;
 getters and setters are. Configurable via `{ max: number }` (default `10`).
+
+```ts
+// before: one class answers for reading, exporting and paying
+class CommissionsService {
+  find() {} findByOrigin() {} findClosings() {} history() {}
+  exportCsv() {} exportXlsx() {}
+  pay() {} reopen() {} close() {} adjust() {} absorb() {}
+}
+
+// after: one responsibility per class
+class CommissionsQuery { find() {} findByOrigin() {} findClosings() {} history() {} }
+class CommissionExport { csv() {} xlsx() {} }
+class CommissionPayment { pay() {} reopen() {} close() {} adjust() {} absorb() {} }
+```
 
 #### `max-class-dependencies`
 
@@ -144,6 +168,29 @@ collaborators to do its job is coordinating, not modelling. Counts the distinct
 types annotated on constructor parameters plus every type instantiated with
 `new` inside the class body — so a dependency hidden behind `new HttpClient()`
 weighs the same as an injected one.
+
+```ts
+// before: six collaborators, so the class coordinates instead of modelling
+class CommissionPaymentService {
+  constructor(
+    private readonly origins: CommissionOriginsRepository,
+    private readonly history: CommissionPaymentHistoryRepository,
+    private readonly snapshots: CommissionClosingSnapshotRepository,
+    private readonly ledger: LedgerRepository,
+    private readonly events: DomainEventPublisher,
+    private readonly clock: Clock,
+  ) {}
+}
+
+// after: the closing workflow becomes a collaborator with a name
+class CommissionPaymentService {
+  constructor(
+    private readonly origins: CommissionOriginsRepository,
+    private readonly closing: CompetenceClosing,
+    private readonly events: DomainEventPublisher,
+  ) {}
+}
+```
 
 De-duplication keeps type arguments, so `Repository<Order>` and
 `Repository<Customer>` count as two collaborators while the same `Clock`
@@ -173,6 +220,32 @@ a dozen fields is a record with a namespace, not a model. Counts instance fields
 declared in the body — plain, `abstract`, or `accessor` — plus every constructor
 parameter property. Methods and accessors belong to `max-class-methods`, and
 `static` members to `no-static-members`, so neither is counted here.
+
+```ts
+// before: seven fields, three of which are one address
+class Recipient {
+  constructor(
+    private readonly name: string,
+    private readonly email: string,
+    private readonly street: string,
+    private readonly city: string,
+    private readonly zipCode: string,
+    private readonly document: string,
+    private readonly phone: string,
+  ) {}
+}
+
+// after: the fields that travel together become value objects
+class Recipient {
+  constructor(
+    private readonly name: string,
+    private readonly email: EmailAddress,
+    private readonly address: Address,
+    private readonly document: Document,
+    private readonly phone: string,
+  ) {}
+}
+```
 
 **Collaborators are not state.** A parameter property typed with a type
 reference, and a field initialised with `new`, are exactly what
@@ -243,6 +316,14 @@ A function that needs four arguments is usually missing the name of the thing
 three of them describe. Counts declared parameters on functions, methods, and
 arrow functions; TypeScript's `this:` pseudo-parameter is not counted, because
 no caller passes it.
+
+```ts
+// before: three of the four describe one event
+function refundOf(debit: Debit, contractId: string, occurredOn: IsoDate, motive: RefundMotive): Refund {}
+
+// after: the event has a name
+function refundOf(debit: Debit, cancellation: Cancellation): Refund {}
+```
 
 **Constructors are not counted.** A constructor's parameters are the class's
 collaborators and state, which `max-class-dependencies` and `max-class-fields`
@@ -345,6 +426,27 @@ Public state should be `readonly` so callers cannot break an aggregate's
 invariants. A declared `private`/`protected` field is allowed, and so is any
 `readonly` member.
 
+```ts
+// before: anyone holding a Money can change how much it is
+class Money {
+  amount = 0;
+}
+price.amount = -10;
+
+// after: the value is fixed, and change is a new value
+class Money {
+  private constructor(private readonly amount: number) {}
+
+  static zero(): Money {
+    return new Money(0);
+  }
+
+  add(other: Money): Money {
+    return new Money(this.amount + other.amount);
+  }
+}
+```
+
 A **decorated** property is allowed by default. `@Column`, `@IsString` and
 friends assign the field from outside the class, so `readonly` would be a lie
 and the property is framework shape rather than state the class chose to carry
@@ -386,6 +488,35 @@ and I/O belong in a static factory or a method, keeping object construction
 predictable. Parameter properties (`constructor(private readonly x: T)`) and a
 leading `super(...)` are allowed; computed right-hand sides (`this.x = x * 2`,
 `this.items = items.slice()`) and any non-assignment statement are flagged.
+
+```ts
+// before: building an EmailAddress validates and normalises
+class EmailAddress {
+  private readonly value: string;
+
+  constructor(raw: string) {
+    if (!EMAIL.test(raw.trim())) {
+      throw new InvalidEmailAddressError(raw);
+    }
+    this.value = raw.trim().toLowerCase();
+  }
+}
+
+// after: the factory does the work, the constructor only stores
+class EmailAddress {
+  private constructor(private readonly value: string) {}
+
+  static create(raw: string): EmailAddress {
+    const normalised = raw.trim().toLowerCase();
+
+    if (!EMAIL.test(normalised)) {
+      throw new InvalidEmailAddressError(raw);
+    }
+
+    return new EmailAddress(normalised);
+  }
+}
+```
 
 **On a class a DI container builds**, the remedy the rule names does not exist:
 nobody calls `new` on a Nest provider, so there is no static factory to move
@@ -438,11 +569,52 @@ flagged. The opt-in `{ methods: true }` option also flags conventional
 `getX`/`setX` methods — useful for strict Elegant Objects style, but noisy
 around repositories and framework hooks, so it stays off in `recommended`.
 
+```ts
+// before: a data bag with a door in and a door out
+class Closing {
+  private status: ClosingStatus;
+
+  get currentStatus(): ClosingStatus {
+    return this.status;
+  }
+
+  set currentStatus(status: ClosingStatus) {
+    this.status = status;
+  }
+}
+
+// after: the object says what it does
+class Closing {
+  private constructor(private readonly status: ClosingStatus) {}
+
+  isPaid(): boolean {
+    return this.status === ClosingStatus.PAID;
+  }
+
+  pay(): Closing {
+    return new Closing(ClosingStatus.PAID);
+  }
+}
+```
+
 #### `no-instanceof`
 
 `instanceof` is type discrimination that belongs inside a polymorphic method on
 the object. Pairs with `no-type-assertion` to keep type-based branching out of
 the codebase.
+
+```ts
+// before: the caller knows every kind of commission
+const debitsOf = (commission: Commission): Debit[] => {
+  if (commission instanceof CashCommission) {
+    return [commission.entry()];
+  }
+  return commission instanceof InstallmentCommission ? commission.schedule() : [];
+};
+
+// after: each commission answers for itself
+const debits = commission.toDebits();
+```
 
 Three uses are allowed by default, because in each of them TypeScript leaves no
 polymorphic alternative to reach for.
@@ -512,6 +684,24 @@ instances (with dependency injection) and a module-level `const` for shared
 values. The `{ allowReadonly: true }` option permits `static readonly`
 constants.
 
+```ts
+// before: a procedure parked in a class
+class DocumentFormatter {
+  static formatCnpj(document: string): string {}
+}
+DocumentFormatter.formatCnpj(raw);
+
+// after: the value formats itself; the static that stays is a constructor
+class Cnpj {
+  private constructor(private readonly digits: string) {}
+
+  static parse(raw: string): Cnpj {}
+
+  formatted(): string {}
+}
+Cnpj.parse(raw).formatted();
+```
+
 Two kinds of static are allowed by default, because neither is behaviour that
 anyone would want to substitute.
 
@@ -560,6 +750,20 @@ or `undefined`. `null` in type positions (`string | null`) and a direct
 flag idioms like `JSON.stringify(x, null, 2)` — relax it in the files where you
 interoperate with null-based APIs.
 
+```ts
+// before: absence travels as a value every caller has to remember
+let lastPayment: PaymentEvent | null = null;
+if (lastPayment === null) {
+  return Status.OPEN;
+}
+
+// after: the history answers, and absence has a name
+const lastPayment = history.lastPayment();
+if (lastPayment === undefined) {
+  return Status.OPEN;
+}
+```
+
 **A declared type guard may compare against `null`.** A column, a payload or a
 third-party SDK hands you `T | null` whatever the domain prefers, and the check
 has to happen somewhere. Inside a function that declares `value is T` or
@@ -593,6 +797,26 @@ A comment inside a body is usually a name that never got written: it labels a
 run of statements that wanted to be its own function. Move the explanation to a
 docblock above the function, or extract what it describes and let the call read
 as the sentence the comment was trying to be.
+
+```ts
+// before: each comment labels a paragraph that wanted to be a function
+async settle(contract: Contract): Promise<void> {
+  // skip contracts the backfill already refunded
+  if (await this.ledger.hasRefund(contract.id())) {
+    return;
+  }
+  // refund what is still open
+  await this.ledger.record(contract.openRefunds());
+}
+
+// after: the names say what the comments said
+async settle(contract: Contract): Promise<void> {
+  if (await this.isAlreadyRefunded(contract)) {
+    return;
+  }
+  await this.refundOpenBalance(contract);
+}
+```
 
 Applies to every function with a block body — methods, constructors, function
 declarations, and arrow functions. Comments outside a body are untouched, so
@@ -662,6 +886,29 @@ rule's defaults? Override it in one line:
 'no-else-return': 'error',
 ```
 
+#### `no-else-return`
+
+The native ESLint rule, enabled with `allowElseIf: false` as the `return`
+sibling of `no-else-after-throw`. When the `then` branch returns, the `else`
+only adds a level of nesting:
+
+```ts
+// before
+if (closing.isPaid()) {
+  return closing;
+} else {
+  return closing.pay();
+}
+
+// after
+if (closing.isPaid()) {
+  return closing;
+}
+return closing.pay();
+```
+
+See the [ESLint documentation](https://eslint.org/docs/latest/rules/no-else-return).
+
 #### `no-interpolated-log-message`
 
 A log message should be a constant, with everything that varies passed as
@@ -714,6 +961,20 @@ to `1` — a single exit — which reads well in Java and badly here, because it
 outlaws the guard clause that `no-else-after-throw` in this very preset pushes
 you towards. Two rules in one config should not disagree.
 
+```ts
+// before: five exits, one per kind
+function motiveOf(settlement: Settlement): RefundMotive | undefined {
+  if (settlement.isFraud()) return RefundMotive.fraud(settlement.day());
+  if (settlement.isEarlySettlement()) return RefundMotive.earlySettlement(settlement.day());
+  if (settlement.isPortability()) return RefundMotive.portability(settlement.day());
+  if (settlement.isRenegotiation()) return RefundMotive.renegotiation(settlement.day());
+  return undefined;
+}
+
+// after: the settlement knows its own motive
+const motive = settlement.refundMotive();
+```
+
 At `max: 3` the rule stops arguing about single exit and measures sprawl
 instead. Two or three guards followed by a final `return` pass; a function
 leaving from six different places is the one worth splitting.
@@ -743,6 +1004,21 @@ A local whose whole job is to hold `obj.status` is a second name for state the
 object already exposes under a name of its own. It buys nothing and it costs a
 reader the hop of proving the two are the same value. Ask the object where you
 need the answer.
+
+```ts
+// before: a second name for state the request already names
+const authHeader = request.headers.authorization;
+if (authHeader === undefined) {
+  throw new MissingBearerTokenError();
+}
+return this.verifier.verify(authHeader);
+
+// after: ask the object where the answer is needed
+if (request.headers.authorization === undefined) {
+  throw new MissingBearerTokenError();
+}
+return this.verifier.verify(request.headers.authorization);
+```
 
 ```ts
 // reported
@@ -803,6 +1079,15 @@ destructured is an object you already hold — a name, `this`, or a run of plain
 `.prop` accesses rooted at one of those.
 
 ```ts
+// before: the closing is taken apart so its pieces can be handed over
+const { originCode, competence } = closing;
+return this.history.find(originCode, competence);
+
+// after: hand over the object, and let the receiver ask it
+return this.history.findFor(closing);
+```
+
+```ts
 // reported
 const { status, enabled } = obj;
 const { access_token, expires_in } = response.data;
@@ -847,6 +1132,16 @@ grow behaviour. Give it a name and it can become a value object; leave it
 anonymous and it stays a struct.
 
 ```ts
+// before: a bag with no name has nowhere to grow behaviour
+async createFundingProduct(data: { originCode: string; productId: string }): Promise<void> {}
+
+// after: the shape has a name, and can become a value object
+type FundingProductRequest = { originCode: string; productId: string };
+
+async createFundingProduct(request: FundingProductRequest): Promise<void> {}
+```
+
+```ts
 // reported
 private toResponse(group: { id: string; name: string; members: number }) {}
 async createFundingProducts(data: { originCode: string; productId: string }) {}
@@ -888,6 +1183,34 @@ with confidence: whoever received it a moment ago is now holding something
 else.
 
 ```ts
+// before: whoever holds the client holds a different token after each refresh
+class CobransaasToken {
+  private accessToken?: string;
+
+  async refresh(): Promise<void> {
+    this.accessToken = await this.auth.fetchToken();
+  }
+}
+
+// after: each token is a value, and a refresh is a new one
+class CobransaasToken {
+  private constructor(
+    private readonly value: string,
+    private readonly expiresAt: Date,
+  ) {}
+
+  static async fetch(auth: CobransaasAuth): Promise<CobransaasToken> {
+    const { accessToken, expiresAt } = await auth.fetchToken();
+    return new CobransaasToken(accessToken, expiresAt);
+  }
+
+  isExpired(now: Date): boolean {
+    return now >= this.expiresAt;
+  }
+}
+```
+
+```ts
 // reported — each one is a lifecycle, not a value
 this.accessToken = access_token;
 this.isPolling = false;
@@ -923,6 +1246,20 @@ that case specifically has nothing to catch but `Error`, which every other
 failure also is, so it ends up matching on the message.
 
 ```ts
+// before: the only way to handle this failure is to match its message
+throw new Error('origin codes are required');
+
+// after: the failure has a type a caller can catch
+export class MissingOriginCodesError extends DomainError {
+  constructor() {
+    super('origin codes are required');
+  }
+}
+
+throw new MissingOriginCodesError();
+```
+
+```ts
 // reported
 throw new Error('origin codes are required');
 throw new TypeError('not a number');
@@ -947,6 +1284,22 @@ signature to the closing brace, so the declaration and the blank lines that
 separate the body's paragraphs count — they are part of what a reader has to
 hold. Decorators above a method annotate it and are not counted.
 
+```ts
+// before: one 90-line method holding three ideas
+async backfill(range: CompetenceRange): Promise<BackfillReport> {
+  /* 30 lines paging through contracts */
+  /* 40 lines deciding each refund */
+  /* 20 lines assembling the report */
+}
+
+// after: each idea gets a name, and the method reads as their sequence
+async backfill(range: CompetenceRange): Promise<BackfillReport> {
+  const contracts = await this.contractsIn(range);
+  const decisions = this.refundDecisionsFor(contracts);
+  return BackfillReport.of(decisions);
+}
+```
+
 Named units are measured, whatever syntax names them: methods, function
 declarations, an arrow held in a class field (`build = () => { ... }`), a
 method or arrow in an object literal, and a function or arrow bound to a
@@ -966,6 +1319,8 @@ code already says which primitive means which type: it is the one it wraps.
 Three shapes give that away:
 
 ```ts
+// before
+
 // a parameter wrapped outside a factory: take the Competence instead
 includes(competence: string): boolean {
   return Competence.create(competence).toOrdinal() >= this.props.start.toOrdinal();
@@ -981,6 +1336,31 @@ class Refund {
 
 // a value object built only to be unwrapped: the validation runs and is thrown away
 competence: Competence.create(props.competence).toString(),
+```
+
+The fix is the same for all three: wrap once, at the factory, and let the value
+object travel from there.
+
+```ts
+// after
+includes(competence: Competence): boolean {
+  return !competence.isBefore(this.props.start);
+}
+
+type RefundProps = { amount: Money; competence: Competence };
+class Refund {
+  static create(props: CreateRefundProps): Refund {
+    return new Refund({
+      ...props,
+      amount: Money.create(props.amount),
+      competence: Competence.create(props.competence),
+    });
+  }
+
+  amount(): Money {
+    return this.props.amount;
+  }
+}
 ```
 
 - **Factories are exempt.** A static method is a secondary constructor, and
