@@ -138,27 +138,27 @@ const fieldOfParameter = (
     : undefined;
 };
 
-/** Declared fields and parameter properties, with the type each declares. */
-const fieldsOf = (body: TSESTree.ClassBody): Field[] =>
-  body.body.flatMap((member): (Field | undefined)[] => {
-    if (
-      member.type === AST_NODE_TYPES.PropertyDefinition &&
-      !member.computed &&
-      member.key.type === AST_NODE_TYPES.Identifier
-    ) {
-      return [
-        {
-          name: member.key.name,
-          annotation: member.typeAnnotation?.typeAnnotation,
-        },
-      ];
-    }
+const fieldOfMember = (member: TSESTree.ClassElement): Field | undefined =>
+  member.type === AST_NODE_TYPES.PropertyDefinition &&
+  !member.computed &&
+  member.key.type === AST_NODE_TYPES.Identifier
+    ? { name: member.key.name, annotation: member.typeAnnotation?.typeAnnotation }
+    : undefined;
 
-    return member.type === AST_NODE_TYPES.MethodDefinition &&
-      member.kind === 'constructor'
-      ? member.value.params.map(fieldOfParameter)
-      : [];
-  }).filter((field): field is Field => field !== undefined);
+const parametersOf = (member: TSESTree.ClassElement): TSESTree.Parameter[] =>
+  member.type === AST_NODE_TYPES.MethodDefinition && member.kind === 'constructor'
+    ? member.value.params
+    : [];
+
+/** The declared field or parameter property called `name`, with the type it declares. */
+const fieldNamed = (
+  body: TSESTree.ClassBody,
+  name: string | undefined,
+): Field | undefined =>
+  [
+    ...body.body.map(fieldOfMember),
+    ...body.body.flatMap(parametersOf).map(fieldOfParameter),
+  ].find((field) => field?.name === name);
 
 /** The members of an alias or interface this file declares by `name`. */
 const declaredMembers = (
@@ -224,7 +224,7 @@ const stateAnnotation = (
   [field, member]: string[],
   program: TSESTree.Program,
 ): TSESTree.TypeNode | undefined => {
-  const declared = fieldsOf(owner.body).find(({ name }) => name === field);
+  const declared = fieldNamed(owner.body, field);
 
   return member === undefined
     ? declared?.annotation
@@ -360,17 +360,6 @@ const stateFinding = (
     : undefined;
 };
 
-const findingsOf = (
-  node: TSESTree.CallExpression,
-  construction: Construction,
-  scope: TSESLint.Scope.Scope,
-): Finding[] =>
-  [
-    discardedFinding(node, construction),
-    parameterFinding(node, construction, scope),
-    stateFinding(node, construction),
-  ].filter((finding): finding is Finding => finding !== undefined);
-
 export default createRule<[], MessageIds>({
   name: 'no-primitive-obsession',
   meta: {
@@ -393,6 +382,13 @@ export default createRule<[], MessageIds>({
   create(context) {
     const reported = new Set<TSESTree.Node>();
 
+    const reportOnce = (finding: Finding | undefined): void => {
+      if (finding && !reported.has(finding.node)) {
+        reported.add(finding.node);
+        context.report(finding);
+      }
+    };
+
     return {
       CallExpression(node) {
         const construction = constructionOf(node);
@@ -401,12 +397,11 @@ export default createRule<[], MessageIds>({
           return;
         }
 
-        findingsOf(node, construction, context.sourceCode.getScope(node))
-          .filter((finding) => !reported.has(finding.node))
-          .forEach((finding) => {
-            reported.add(finding.node);
-            context.report(finding);
-          });
+        [
+          discardedFinding(node, construction),
+          parameterFinding(node, construction, context.sourceCode.getScope(node)),
+          stateFinding(node, construction),
+        ].forEach(reportOnce);
       },
     };
   },

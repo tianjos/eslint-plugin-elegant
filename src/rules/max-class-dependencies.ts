@@ -17,28 +17,27 @@ type Dependency = { key: string; root: string };
 /** Distinct collaborator keys gathered for a single class body. */
 type Dependencies = Set<string>;
 
-const injected = (
+const constructorOf = (
   body: TSESTree.ClassBody,
-  sourceCode: TSESLint.SourceCode,
-): Dependency[] => {
-  const constructor = body.body.find(
+): TSESTree.MethodDefinition | undefined =>
+  body.body.find(
     (member): member is TSESTree.MethodDefinition =>
       member.type === AST_NODE_TYPES.MethodDefinition &&
       member.kind === 'constructor',
   );
 
-  return (constructor?.value.params ?? []).flatMap((param) => {
-    const annotation = annotatedReference(param);
+const injected = (
+  param: TSESTree.Parameter,
+  sourceCode: TSESLint.SourceCode,
+): Dependency | undefined => {
+  const annotation = annotatedReference(param);
 
-    return annotation === undefined
-      ? []
-      : [
-          {
-            key: sourceCode.getText(annotation),
-            root: sourceCode.getText(annotation.typeName),
-          },
-        ];
-  });
+  return (
+    annotation && {
+      key: sourceCode.getText(annotation),
+      root: sourceCode.getText(annotation.typeName),
+    }
+  );
 };
 
 const instantiated = (
@@ -100,9 +99,9 @@ export default createRule<Options, MessageIds>({
 
     const record = (
       scope: Dependencies | undefined,
-      dependency: Dependency,
+      dependency: Dependency | undefined,
     ): void => {
-      if (scope !== undefined && !ignored.has(dependency.root)) {
+      if (scope && dependency && !ignored.has(dependency.root)) {
         scope.add(dependency.key);
       }
     };
@@ -112,9 +111,9 @@ export default createRule<Options, MessageIds>({
         const scope: Dependencies = new Set();
         scopes.push(scope);
 
-        for (const dependency of injected(node, sourceCode)) {
-          record(scope, dependency);
-        }
+        constructorOf(node)?.value.params.forEach((param) =>
+          record(scope, injected(param, sourceCode)),
+        );
       },
 
       NewExpression(node): void {
