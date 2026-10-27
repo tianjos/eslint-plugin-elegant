@@ -86,7 +86,7 @@ The plugin exports four configs. Two are presets — `recommended` and `starter`
 - **`starter`** — the same rules with the four heaviest demoted, for adopting
   on a codebase that already exists. See
   [Adopting on an existing codebase](#adopting-on-an-existing-codebase).
-- **`tests`** — an override, not a preset: the nine rules a spec legitimately
+- **`tests`** — an override, not a preset: the ten rules a spec legitimately
   trips, off. See [Relaxing rules in test files](#relaxing-rules-in-test-files).
 - **`off`** — an override too: every rule disabled, for generated files. See
   [Generated and scaffolded files](#generated-and-scaffolded-files).
@@ -118,6 +118,7 @@ The plugin exports four configs. Two are presets — `recommended` and `starter`
 | `elegant/no-generic-error`             | custom | `throw new Error(...)` and the other built-in error types                       | `error`       |
 | `elegant/max-method-lines`             | custom | Named functions and methods longer than `max` lines                             | `warn` (max 50) |
 | `elegant/no-primitive-obsession`       | custom | Primitives the code itself turns into a value object: parameters wrapped outside a factory, state wrapped on read, values built to be unwrapped | `error` |
+| `elegant/no-bare-collection`           | custom | Arrays of domain types in return types, parameters and type properties, outside the class that owns them | `error` |
 | `no-else-return`                       | native | An `else` branch when the `then` branch always returns (`allowElseIf: false`)   | `error`       |
 
 ### Rule details
@@ -1004,6 +1005,60 @@ The 35 reports in specs are assertions such as
 `expect(Competence.create('2026-04').toString())`, which is how a value object
 is tested, so `tests` turns the rule off. Not configurable.
 
+#### `no-bare-collection`
+
+A `Competence[]` is as primitive as a `string`: whoever receives it knows it has
+positions, a length and elements, and the `[0]`, `[length - 1]` and `.filter`
+that follow are the internals leaking one call at a time. Object Calisthenics
+calls the fix a first-class collection — a class that keeps the array private
+and offers the operations its callers need:
+
+```ts
+// before: the window hands out its array, and the caller picks it apart
+export const refundEstimateWindow = (current: Competence): Competence[] => ...;
+const range = CompetenceRange.create(window[0].toString(), window[window.length - 1].toString());
+
+// after: the window answers the question itself
+export class RefundEstimateWindow {
+  private constructor(private readonly current: Competence) {}
+
+  static before(current: Competence): RefundEstimateWindow {
+    return new RefundEstimateWindow(current);
+  }
+
+  range(): CompetenceRange {
+    return CompetenceRange.between(this.current.addMonths(-3), this.current.addMonths(-1));
+  }
+}
+```
+
+**What is reported.** An array of a domain type is reported when it is
+declared in a function's or method's return type, in a parameter, or in an
+interface or type-literal property. Interface method signatures count too, so
+a repository contract returning `Promise<Contract[]>` is reported. The rule
+sees through `readonly`, `Array<T>`, `ReadonlyArray<T>`, a `Promise`, and a
+union with `undefined` or `null`.
+
+A domain type is a PascalCase name declared by your code. Primitives
+(`string[]`), built-ins (`Date[]`), utility types, type parameters (`T[]`) and
+library namespaces (`TSESTree.Node[]`) are not reported.
+
+**What is allowed.** The array is allowed where its owner holds it:
+
+- **The class's own state.** That covers fields, parameter properties, and the
+  props type a field names in the same file (`private readonly props:
+  ReportProps`).
+- **The input of construction.** That covers the parameters of a constructor or
+  a static factory, and the props type they name.
+- **Private methods.** A private method works on the internals, and what it
+  returns never leaves the class.
+
+Local variables are not reported: their type comes from the signatures above.
+
+**Boundaries.** An API payload, an ORM relation and a DTO list are boundaries.
+Scope them out by file glob rather than weakening the rule. Entity and DTO
+classes already pass, because their arrays are class fields. Not configurable.
+
 ## Configuration
 
 ### Overriding thresholds
@@ -1126,7 +1181,7 @@ Spread `tests` in a config block scoped to your spec globs:
 }
 ```
 
-It turns off nine rules, and the list is a measurement rather than a taste.
+It turns off ten rules, and the list is a measurement rather than a taste.
 Over the corpus above, these are the rules that actually report inside test
 files, each for a reason that holds there and nowhere else:
 
@@ -1135,6 +1190,7 @@ files, each for a reason that holds there and nowhere else:
 | `no-comments-in-function-body` | 2,589 | a spec narrates the scenario |
 | `no-type-assertion` | 935 | a mock asserts a type over a partial object |
 | `no-null` | 896 | a fixture mirrors a nullable column |
+| `no-bare-collection` | 38 | a fixture builds the arrays a repository returns |
 | `no-primitive-obsession` | 35 | a spec asserts what a value object unwraps to |
 | `no-anonymous-param-type` | 27 | a fixture builder takes an inline shape |
 | `no-generic-error` | 17 | `throw new Error('boom')` as a failure stub |

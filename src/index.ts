@@ -1,6 +1,7 @@
 import type { TSESLint } from '@typescript-eslint/utils';
 import noAnonymousParamType from './rules/no-anonymous-param-type';
 import noAnyReturn from './rules/no-any-return';
+import noBareCollection from './rules/no-bare-collection';
 import maxClassDependencies from './rules/max-class-dependencies';
 import maxMethodLines from './rules/max-method-lines';
 import maxParams from './rules/max-params';
@@ -60,6 +61,7 @@ const rules = {
   'max-method-lines': maxMethodLines,
   'max-params': maxParams,
   'no-primitive-obsession': noPrimitiveObsession,
+  'no-bare-collection': noBareCollection,
 };
 
 type Plugin = {
@@ -109,6 +111,7 @@ plugin.configs.recommended = {
     'elegant/max-method-lines': ['warn', { max: 50 }],
     'elegant/max-params': ['warn', { max: 3 }],
     'elegant/no-primitive-obsession': 'error',
+    'elegant/no-bare-collection': 'error',
     'no-else-return': ['error', { allowElseIf: false }],
   },
 };
@@ -161,13 +164,13 @@ plugin.configs.off = {
  * The rules a spec legitimately trips, off — and only those.
  *
  * Which ones those are is a measurement, not a taste: over the corpus in
- * "Adopting on an existing codebase", these nine are the rules that fire
+ * "Adopting on an existing codebase", these ten are the rules that fire
  * inside test files, each for a reason that holds there and nowhere else. A
  * mock has to assert a type over a partial object, a fixture mirrors a
  * nullable column, `make*(withRefunds: true)` names the scenario under test,
  * and a spec narrates. A spec asserts what a value object
  * unwraps to, `Competence.create('2026-04').toString()`, which is how a value
- * object is tested.
+ * object is tested, and a fixture builds the arrays a repository returns.
  *
  * The rules kept out of this list are kept out on purpose. `max-class-fields`,
  * `max-returns`, `no-static-members` and the rest report zero times in specs
@@ -187,6 +190,7 @@ plugin.configs.tests = {
     'elegant/no-anonymous-param-type': 'off',
     'elegant/max-params': 'off',
     'elegant/no-primitive-obsession': 'off',
+    'elegant/no-bare-collection': 'off',
   },
 };
 
