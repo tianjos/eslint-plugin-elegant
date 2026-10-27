@@ -86,7 +86,7 @@ The plugin exports four configs. Two are presets — `recommended` and `starter`
 - **`starter`** — the same rules with the four heaviest demoted, for adopting
   on a codebase that already exists. See
   [Adopting on an existing codebase](#adopting-on-an-existing-codebase).
-- **`tests`** — an override, not a preset: the eleven rules a spec legitimately
+- **`tests`** — an override, not a preset: the twelve rules a spec legitimately
   trips, off. See [Relaxing rules in test files](#relaxing-rules-in-test-files).
 - **`off`** — an override too: every rule disabled, for generated files. See
   [Generated and scaffolded files](#generated-and-scaffolded-files).
@@ -120,6 +120,7 @@ The plugin exports four configs. Two are presets — `recommended` and `starter`
 | `elegant/no-primitive-obsession`       | custom | Primitives the code itself turns into a value object: parameters wrapped outside a factory, state wrapped on read, values built to be unwrapped | `error` |
 | `elegant/no-bare-collection`           | custom | Arrays of domain types in return types, parameters and type properties, outside the class that owns them | `error` |
 | `elegant/no-collection-internals`      | custom | Positional reads and `map`/`filter`/`reduce`/... over a collection that is not the class's own state | `error` |
+| `elegant/no-trivial-constant`          | custom | Module constants that only name an empty collection or a value object built from literals | `error` |
 | `no-else-return`                       | native | An `else` branch when the `then` branch always returns (`allowElseIf: false`)   | `error`       |
 
 ### Rule details
@@ -1112,6 +1113,45 @@ boundary, and so is code that walks a parser's AST: scope them out by file
 glob. This plugin does exactly that for its own `src/`, whose every array is
 ESTree's. Not configurable.
 
+#### `no-trivial-constant`
+
+Some module constants name no rule of the business. They name a value the
+type already owns:
+
+```ts
+// before: twelve modules, twelve copies of the same zero
+const ZERO = Money.create(0);
+const NOTHING_TO_PROJECT: ForecastShare[] = [];
+
+// after: the types name their own neutral values
+Money.zero();
+ForecastShares.none();
+```
+
+**What is reported.** A module-level `const` is reported when it holds only one
+of two things:
+
+- **An empty value:** `[]`, `{}`, or a `Map`, `Set`, `WeakMap` or `WeakSet`
+  built with nothing in it. The rule looks through an assertion or
+  `Object.freeze`.
+- **A literal-built value object:** `Type.factory(...)` called with literal
+  arguments only, such as `Money.create(0)` or `Competence.create('2026-10')`.
+
+**What is left alone:**
+
+- **Literals that name a rule.** `MONTHS_PER_YEAR = 12` and
+  `REVERSAL_PREFIX = 'revert:'` stay, because the name is the business
+  knowledge.
+- **The type's own file.** A file that declares `class Money` may keep a
+  `ZERO` that `Money.zero()` returns.
+- **Caches and registries.** A module that fills a `Map` or array in place
+  later, with `set`, `add`, `push` and the like, is keeping state rather than
+  naming an empty value.
+- **Locals.** Constants inside a function are not reported.
+
+Off in `tests`, where a spec names the dates its scenario happens on. Not
+configurable.
+
 ## Configuration
 
 ### Overriding thresholds
@@ -1234,7 +1274,7 @@ Spread `tests` in a config block scoped to your spec globs:
 }
 ```
 
-It turns off eleven rules, and the list is a measurement rather than a taste.
+It turns off twelve rules, and the list is a measurement rather than a taste.
 Over the corpus above, these are the rules that actually report inside test
 files, each for a reason that holds there and nowhere else:
 
@@ -1247,6 +1287,7 @@ files, each for a reason that holds there and nowhere else:
 | `no-bare-collection` | 38 | a fixture builds the arrays a repository returns |
 | `no-primitive-obsession` | 35 | a spec asserts what a value object unwraps to |
 | `no-anonymous-param-type` | 27 | a fixture builder takes an inline shape |
+| `no-trivial-constant` | 22 | a spec names the dates its scenario happens on |
 | `no-generic-error` | 17 | `throw new Error('boom')` as a failure stub |
 | `max-params` | 6 | a setup helper |
 | `no-null-return` | 2 | a fixture returns absence |

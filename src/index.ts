@@ -25,6 +25,7 @@ import noPropertyAlias from './rules/no-property-alias';
 import noPropertyDestructuring from './rules/no-property-destructuring';
 import noPublicMutableProps from './rules/no-public-mutable-props';
 import noStaticMembers from './rules/no-static-members';
+import noTrivialConstant from './rules/no-trivial-constant';
 import noTypeAssertion from './rules/no-type-assertion';
 
 // require() of a JSON file yields `any`, so there is no honest type to reach
@@ -64,6 +65,7 @@ const rules = {
   'no-primitive-obsession': noPrimitiveObsession,
   'no-bare-collection': noBareCollection,
   'no-collection-internals': noCollectionInternals,
+  'no-trivial-constant': noTrivialConstant,
 };
 
 type Plugin = {
@@ -115,6 +117,7 @@ plugin.configs.recommended = {
     'elegant/no-primitive-obsession': 'error',
     'elegant/no-bare-collection': 'error',
     'elegant/no-collection-internals': 'error',
+    'elegant/no-trivial-constant': 'error',
     'no-else-return': ['error', { allowElseIf: false }],
   },
 };
@@ -167,14 +170,15 @@ plugin.configs.off = {
  * The rules a spec legitimately trips, off — and only those.
  *
  * Which ones those are is a measurement, not a taste: over the corpus in
- * "Adopting on an existing codebase", these eleven are the rules that fire
+ * "Adopting on an existing codebase", these twelve are the rules that fire
  * inside test files, each for a reason that holds there and nowhere else. A
  * mock has to assert a type over a partial object, a fixture mirrors a
  * nullable column, `make*(withRefunds: true)` names the scenario under test,
  * and a spec narrates. A spec asserts what a value object
  * unwraps to, `Competence.create('2026-04').toString()`, which is how a value
  * object is tested, and a fixture builds the arrays a repository returns and an
- * assertion picks them apart: `expect(rows[0])`.
+ * assertion picks them apart: `expect(rows[0])`. A spec names the dates its
+ * scenario happens on, `const OCTOBER = Competence.create('2026-10')`.
  *
  * The rules kept out of this list are kept out on purpose. `max-class-fields`,
  * `max-returns`, `no-static-members` and the rest report zero times in specs
@@ -196,6 +200,7 @@ plugin.configs.tests = {
     'elegant/no-primitive-obsession': 'off',
     'elegant/no-bare-collection': 'off',
     'elegant/no-collection-internals': 'off',
+    'elegant/no-trivial-constant': 'off',
   },
 };
 

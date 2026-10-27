@@ -5,15 +5,10 @@ import {
   TSESTree,
 } from '@typescript-eslint/utils';
 import { closestAncestor } from '../utils/ancestors';
+import { Construction, constructionOf } from '../utils/construction';
 import { createRule } from '../utils/createRule';
 
 type MessageIds = 'wrappedParameter' | 'wrappedState' | 'discardedValueObject';
-
-/** `Type.factory(...)`: a call on a class, read from its name alone. */
-type Construction = {
-  type: string;
-  factory: string;
-};
 
 type Field = { name: string; annotation: TSESTree.TypeNode | undefined };
 
@@ -38,41 +33,7 @@ const ABSENCE = new Set<AST_NODE_TYPES>([
   AST_NODE_TYPES.TSNullKeyword,
 ]);
 
-/** Namespaces of the language and the platform, whose calls convert rather than model. */
-const NAMESPACES = new Set([
-  'AbortSignal',
-  'Array',
-  'BigInt',
-  'Boolean',
-  'Buffer',
-  'Date',
-  'Intl',
-  'JSON',
-  'Math',
-  'Number',
-  'Object',
-  'Promise',
-  'Reflect',
-  'String',
-  'Symbol',
-]);
-
 const UNWRAPS = new Set(['toString', 'toNumber', 'toPrimitives', 'valueOf']);
-
-/** PascalCase, so `Money` is a type and `UUID_PATTERN` is a constant. */
-const isTypeName = (name: string): boolean =>
-  /^[A-Z][a-z]/.test(name) && !NAMESPACES.has(name);
-
-const constructionOf = (
-  node: TSESTree.CallExpression,
-): Construction | undefined =>
-  node.callee.type === AST_NODE_TYPES.MemberExpression &&
-  !node.callee.computed &&
-  node.callee.object.type === AST_NODE_TYPES.Identifier &&
-  node.callee.property.type === AST_NODE_TYPES.Identifier &&
-  isTypeName(node.callee.object.name)
-    ? { type: node.callee.object.name, factory: node.callee.property.name }
-    : undefined;
 
 /**
  * The primitive an annotation reduces to once absence is set aside, so

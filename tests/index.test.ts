@@ -42,6 +42,12 @@ describe('plugin surface', () => {
     expect(recommended).not.toHaveProperty('max-params');
   });
 
+  it('errors on module constants that only name an empty or literal value by default', () => {
+    expect(plugin.configs.recommended.rules?.['elegant/no-trivial-constant']).toBe(
+      'error',
+    );
+  });
+
   it('errors on collection internals read from outside their owner by default', () => {
     expect(
       plugin.configs.recommended.rules?.['elegant/no-collection-internals'],
@@ -107,7 +113,7 @@ describe('plugin surface', () => {
     );
   });
 
-  it('offers a tests config that silences the eleven rules specs legitimately trip', () => {
+  it('offers a tests config that silences the twelve rules specs legitimately trip', () => {
     const tests = plugin.configs.tests.rules ?? {};
 
     expect(Object.keys(tests).sort()).toEqual(
@@ -123,6 +129,7 @@ describe('plugin surface', () => {
         'elegant/no-primitive-obsession',
         'elegant/no-bare-collection',
         'elegant/no-collection-internals',
+        'elegant/no-trivial-constant',
       ].sort(),
     );
     expect(Object.values(tests).every((severity) => severity === 'off')).toBe(
