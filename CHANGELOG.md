@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.13.0](https://github.com/tianjos/eslint-plugin-elegant/compare/v0.12.1...v0.13.0) (2026-10-27)
+
+### Features
+
+* **no-anemic-type:** report data types taken apart into free functions ([adefed5](https://github.com/tianjos/eslint-plugin-elegant/commit/adefed5c313518046696daf1df5bac4eaf622186))
+* **no-bare-collection:** report arrays of domain types in signatures ([a3c1328](https://github.com/tianjos/eslint-plugin-elegant/commit/a3c132809f294c6a4ed4d23b44cabdaf1fd8daf5))
+* **no-collection-internals:** report positional reads and pipelines outside the owner ([02d50c3](https://github.com/tianjos/eslint-plugin-elegant/commit/02d50c3a266c66174f5801bbc962fcb5a3500ed8))
+* **no-primitive-obsession:** report primitives the code itself wraps ([3e2b5e7](https://github.com/tianjos/eslint-plugin-elegant/commit/3e2b5e7b777420b5a1050c3f6da7868e84d89f39))
+* **no-trivial-constant:** report module constants that only name a type's value ([5ff0087](https://github.com/tianjos/eslint-plugin-elegant/commit/5ff008772728aa093f1d96774a124a42a0af420b))
+
 ## [0.12.1](https://github.com/tianjos/eslint-plugin-elegant/compare/v0.12.0...v0.12.1) (2026-10-20)
 
 ### Bug Fixes
