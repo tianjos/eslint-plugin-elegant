@@ -86,7 +86,7 @@ The plugin exports four configs. Two are presets — `recommended` and `starter`
 - **`starter`** — the same rules with the four heaviest demoted, for adopting
   on a codebase that already exists. See
   [Adopting on an existing codebase](#adopting-on-an-existing-codebase).
-- **`tests`** — an override, not a preset: the eight rules a spec legitimately
+- **`tests`** — an override, not a preset: the nine rules a spec legitimately
   trips, off. See [Relaxing rules in test files](#relaxing-rules-in-test-files).
 - **`off`** — an override too: every rule disabled, for generated files. See
   [Generated and scaffolded files](#generated-and-scaffolded-files).
@@ -117,6 +117,7 @@ The plugin exports four configs. Two are presets — `recommended` and `starter`
 | `elegant/no-self-mutation`             | custom | Writing to your own fields outside the constructor                              | `error`       |
 | `elegant/no-generic-error`             | custom | `throw new Error(...)` and the other built-in error types                       | `error`       |
 | `elegant/max-method-lines`             | custom | Named functions and methods longer than `max` lines                             | `warn` (max 50) |
+| `elegant/no-primitive-obsession`       | custom | Primitives the code itself turns into a value object: parameters wrapped outside a factory, state wrapped on read, values built to be unwrapped | `error` |
 | `no-else-return`                       | native | An `else` branch when the `then` branch always returns (`allowElseIf: false`)   | `error`       |
 
 ### Rule details
@@ -951,6 +952,58 @@ because a long callback already makes its host long and the host is what gets
 reported. Configurable via `{ max: number }` (default `50`), and a `warn`
 rather than an `error`, like the other thresholds.
 
+#### `no-primitive-obsession`
+
+A codebase that has `Money` and `Competence` and still passes `amount: number`
+and `competence: string` around has the value objects without their benefit:
+every function that receives the primitive has to re-validate it, or trust that
+someone upstream did. The rule needs no list of your value objects, because the
+code already says which primitive means which type: it is the one it wraps.
+Three shapes give that away:
+
+```ts
+// a parameter wrapped outside a factory: take the Competence instead
+includes(competence: string): boolean {
+  return Competence.create(competence).toOrdinal() >= this.props.start.toOrdinal();
+}
+
+// state stored as a primitive and wrapped on every read: store the Money
+type RefundProps = { amount: number };
+class Refund {
+  amount(): Money {
+    return Money.create(this.props.amount);
+  }
+}
+
+// a value object built only to be unwrapped: the validation runs and is thrown away
+competence: Competence.create(props.competence).toString(),
+```
+
+- **Factories are exempt.** A static method is a secondary constructor, and
+  wrapping what arrives from the boundary is its job. A value object building
+  itself (`Money.create(this.amount)` inside `class Money`) is exempt for the
+  same reason.
+- **Only one argument counts.** In `History.restore(originCode, competence)`,
+  `originCode` is one of the things a factory is told, not the value being
+  wrapped.
+- **State is judged by its declared type.** The declared type is read from the
+  class's own field or parameter property, and, for `this.props.x`, from a
+  type or interface declared in the same file. A type imported from elsewhere
+  is not guessed at, so `Competence.create(this.props.occurredOn)` on an
+  `IsoDate` is a derivation and is not reported.
+- **What counts as a type.** A type is a PascalCase identifier that is not a
+  platform namespace (`JSON`, `Math`, `Number`, `AbortSignal`, ...).
+- **What counts as unwrapping.** `toString`, `toNumber`, `toPrimitives` and
+  `valueOf`.
+
+On the corpus in [Adopting on an existing codebase](#adopting-on-an-existing-codebase)
+the rule reports 12 places outside tests, none of them false: among them
+`CompetenceRange.includes`, `Refund` and `Debit` re-wrapping their own amount on
+every read, and both factories validating a `Competence` and storing its string.
+The 35 reports in specs are assertions such as
+`expect(Competence.create('2026-04').toString())`, which is how a value object
+is tested, so `tests` turns the rule off. Not configurable.
+
 ## Configuration
 
 ### Overriding thresholds
@@ -1073,7 +1126,7 @@ Spread `tests` in a config block scoped to your spec globs:
 }
 ```
 
-It turns off eight rules, and the list is a measurement rather than a taste.
+It turns off nine rules, and the list is a measurement rather than a taste.
 Over the corpus above, these are the rules that actually report inside test
 files, each for a reason that holds there and nowhere else:
 
@@ -1082,6 +1135,7 @@ files, each for a reason that holds there and nowhere else:
 | `no-comments-in-function-body` | 2,589 | a spec narrates the scenario |
 | `no-type-assertion` | 935 | a mock asserts a type over a partial object |
 | `no-null` | 896 | a fixture mirrors a nullable column |
+| `no-primitive-obsession` | 35 | a spec asserts what a value object unwraps to |
 | `no-anonymous-param-type` | 27 | a fixture builder takes an inline shape |
 | `no-generic-error` | 17 | `throw new Error('boom')` as a failure stub |
 | `max-params` | 6 | a setup helper |
