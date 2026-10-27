@@ -86,7 +86,7 @@ The plugin exports four configs. Two are presets — `recommended` and `starter`
 - **`starter`** — the same rules with the four heaviest demoted, for adopting
   on a codebase that already exists. See
   [Adopting on an existing codebase](#adopting-on-an-existing-codebase).
-- **`tests`** — an override, not a preset: the ten rules a spec legitimately
+- **`tests`** — an override, not a preset: the eleven rules a spec legitimately
   trips, off. See [Relaxing rules in test files](#relaxing-rules-in-test-files).
 - **`off`** — an override too: every rule disabled, for generated files. See
   [Generated and scaffolded files](#generated-and-scaffolded-files).
@@ -119,6 +119,7 @@ The plugin exports four configs. Two are presets — `recommended` and `starter`
 | `elegant/max-method-lines`             | custom | Named functions and methods longer than `max` lines                             | `warn` (max 50) |
 | `elegant/no-primitive-obsession`       | custom | Primitives the code itself turns into a value object: parameters wrapped outside a factory, state wrapped on read, values built to be unwrapped | `error` |
 | `elegant/no-bare-collection`           | custom | Arrays of domain types in return types, parameters and type properties, outside the class that owns them | `error` |
+| `elegant/no-collection-internals`      | custom | Positional reads and `map`/`filter`/`reduce`/... over a collection that is not the class's own state | `error` |
 | `no-else-return`                       | native | An `else` branch when the `then` branch always returns (`allowElseIf: false`)   | `error`       |
 
 ### Rule details
@@ -1059,6 +1060,58 @@ Local variables are not reported: their type comes from the signatures above.
 Scope them out by file glob rather than weakening the rule. Entity and DTO
 classes already pass, because their arrays are class fields. Not configurable.
 
+#### `no-collection-internals`
+
+The companion of `no-bare-collection`: that rule reports the array crossing a
+signature, this one the code that picks it apart. A collection read by position
+(`window[0]`, `window[window.length - 1]`, `ids.at(-1)`) or run through a
+pipeline (`map`, `filter`, `reduce`, `find`, `some`, `every`, `flatMap`,
+`forEach`, ...) outside its owner is asking for internals instead of telling
+the owner what it wants:
+
+```ts
+// before: the service knows how a total ties to an origin
+const totalsOf = (origin: CommissionOrigin, totals: readonly DescriptionChainTotal[]) =>
+  totals.filter((total) => total.commissionOriginId === origin.id);
+
+// after: the collection answers, and the filter is its own business
+export class DescriptionChainTotals {
+  private constructor(private readonly totals: readonly DescriptionChainTotal[]) {}
+
+  of(origin: CommissionOrigin): DescriptionChainTotals {
+    return new DescriptionChainTotals(this.totals.filter((total) => total.belongsTo(origin)));
+  }
+}
+```
+
+**What is allowed:**
+
+- **Own state.** That covers `this.items` and `this.props.items`, a chain that
+  starts there (`this.items.filter(isOpen).map(amountOf)`), and a `const`
+  derived from it.
+- **Views of own state.** `Object.entries(this.props.lines)` and
+  `[...this.items].sort(byDay)` read the class's own collection, so they pass.
+- **Array literals.** A literal written in place belongs to whoever wrote it,
+  so `[note, entry.note()].filter(Boolean)` passes. A literal that spreads a
+  foreign collection, such as `[...days]`, is still foreign.
+- **Static factories.** A static method is a secondary constructor, and
+  building a collection from the rows that arrive is its job:
+  `static fromRows(rows: Row[]) { return new Totals(rows.map(Total.fromRow)); }`.
+- **String and regex results.** `key.split(':')[0]` and `PATTERN.exec(raw)?.[1]`
+  are read by position by design.
+
+A chain over a foreign collection is reported once, at its first link.
+
+**What is still reported.** An element of your own collection asked about its
+own internals (`this.groups.map((group) => group.items.filter(isOpen))`) is
+reported, because `group.items` belongs to the group.
+
+**Boundaries.** Without type information the rule cannot tell your
+collections from a library's. A repository mapping rows into the domain is a
+boundary, and so is code that walks a parser's AST: scope them out by file
+glob. This plugin does exactly that for its own `src/`, whose every array is
+ESTree's. Not configurable.
+
 ## Configuration
 
 ### Overriding thresholds
@@ -1181,7 +1234,7 @@ Spread `tests` in a config block scoped to your spec globs:
 }
 ```
 
-It turns off ten rules, and the list is a measurement rather than a taste.
+It turns off eleven rules, and the list is a measurement rather than a taste.
 Over the corpus above, these are the rules that actually report inside test
 files, each for a reason that holds there and nowhere else:
 
@@ -1190,6 +1243,7 @@ files, each for a reason that holds there and nowhere else:
 | `no-comments-in-function-body` | 2,589 | a spec narrates the scenario |
 | `no-type-assertion` | 935 | a mock asserts a type over a partial object |
 | `no-null` | 896 | a fixture mirrors a nullable column |
+| `no-collection-internals` | 384 | an assertion reads `rows[0]`; a fixture maps the rows it builds |
 | `no-bare-collection` | 38 | a fixture builds the arrays a repository returns |
 | `no-primitive-obsession` | 35 | a spec asserts what a value object unwraps to |
 | `no-anonymous-param-type` | 27 | a fixture builder takes an inline shape |

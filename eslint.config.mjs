@@ -31,4 +31,21 @@ export default [
       'elegant/no-null': 'off',
     },
   },
+  {
+    // The same escape for collections. Every array a rule reads is ESTree's:
+    // `node.params`, `node.arguments`, the `[start, end]` tuple in
+    // `node.range`. They belong to the parser, not to this plugin, so there
+    // is no owner to move the operation into.
+    files: ['src/**/*.ts'],
+    rules: {
+      'elegant/no-collection-internals': 'off',
+    },
+  },
+  {
+    // The plugin's specs, held to what it recommends for specs.
+    files: ['tests/**/*.ts'],
+    rules: {
+      ...elegant.configs.tests.rules,
+    },
+  },
 ];
