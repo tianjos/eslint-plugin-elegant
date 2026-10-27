@@ -1243,7 +1243,7 @@ files, each for a reason that holds there and nowhere else:
 | `no-comments-in-function-body` | 2,589 | a spec narrates the scenario |
 | `no-type-assertion` | 935 | a mock asserts a type over a partial object |
 | `no-null` | 896 | a fixture mirrors a nullable column |
-| `no-collection-internals` | 384 | an assertion reads `rows[0]`; a fixture maps the rows it builds |
+| `no-collection-internals` | 365 | an assertion reads `rows[0]`; a fixture maps the rows it builds |
 | `no-bare-collection` | 38 | a fixture builds the arrays a repository returns |
 | `no-primitive-obsession` | 35 | a spec asserts what a value object unwraps to |
 | `no-anonymous-param-type` | 27 | a fixture builder takes an inline shape |
