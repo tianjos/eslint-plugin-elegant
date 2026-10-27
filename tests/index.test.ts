@@ -42,6 +42,13 @@ describe('plugin surface', () => {
     expect(recommended).not.toHaveProperty('max-params');
   });
 
+  it('warns on data types taken apart into two or more free functions by default', () => {
+    expect(plugin.configs.recommended.rules?.['elegant/no-anemic-type']).toEqual([
+      'warn',
+      { minFunctions: 2 },
+    ]);
+  });
+
   it('errors on module constants that only name an empty or literal value by default', () => {
     expect(plugin.configs.recommended.rules?.['elegant/no-trivial-constant']).toBe(
       'error',
