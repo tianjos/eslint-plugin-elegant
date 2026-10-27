@@ -120,6 +120,7 @@ The plugin exports four configs. Two are presets — `recommended` and `starter`
 | `elegant/no-primitive-obsession`       | custom | Primitives the code itself turns into a value object: parameters wrapped outside a factory, state wrapped on read, values built to be unwrapped | `error` |
 | `elegant/no-bare-collection`           | custom | Arrays of domain types in return types, parameters and type properties, outside the class that owns them | `error` |
 | `elegant/no-collection-internals`      | custom | Positional reads and `map`/`filter`/`reduce`/... over a collection that is not the class's own state | `error` |
+| `elegant/no-anemic-type`               | custom | Data types that `minFunctions` or more free functions in the same file take as their first parameter | `warn` (minFunctions 2) |
 | `elegant/no-trivial-constant`          | custom | Module constants that only name an empty collection or a value object built from literals | `error` |
 | `no-else-return`                       | native | An `else` branch when the `then` branch always returns (`allowElseIf: false`)   | `error`       |
 
@@ -1152,6 +1153,47 @@ of two things:
 Off in `tests`, where a spec names the dates its scenario happens on. Not
 configurable.
 
+#### `no-anemic-type`
+
+A data type with free functions around it is a class taken apart: the state
+on one side, the behaviour on the other, and every function taking the state
+as its first parameter, which is the `this` it would have as a method:
+
+```ts
+// before
+type ReportTotals = { outcomes: Outcomes; failed: Failure[]; lastContractId?: string };
+
+const foldRecorded = (totals: ReportTotals, event: RecordedEvent): ReportTotals => ...;
+const foldFailed = (totals: ReportTotals, event: FailedEvent): ReportTotals => ...;
+const progressOf = (totals: ReportTotals): Progress => ...;
+
+// after
+class ReportTotals {
+  private constructor(private readonly props: ReportTotalsProps) {}
+
+  static empty(): ReportTotals { ... }
+  record(event: ReportEvent): ReportTotals { ... }
+  progress(): Progress { ... }
+}
+```
+
+**What is reported.** A type alias or interface is reported once, on its name,
+listing the functions. To count, a type must meet these conditions:
+
+- It is declared in the file.
+- It carries only properties. A method signature makes it a contract, not
+  data. An intersection with a shape counts.
+- `minFunctions` or more top-level functions in the same file take it as
+  their first parameter: function declarations, or arrows and function
+  expressions bound to a `const`. `Readonly<T>` counts as `T`.
+
+**What is not counted.** A function taking the type in a later position is
+not counted, because the type is one of its collaborators, not its receiver.
+Methods of a class are not counted, because they already live with their data.
+
+**Why `warn`.** "Two functions" is a threshold, so the rule ships at `warn` like
+the other thresholds. Configurable via `{ minFunctions: number }` (default `2`).
+
 ## Configuration
 
 ### Overriding thresholds
@@ -1168,6 +1210,9 @@ rules: {
   'elegant/max-params': ['warn', { max: 4 }],
 }
 ```
+
+`no-anemic-type` is a threshold too, counted from below:
+`'elegant/no-anemic-type': ['warn', { minFunctions: 3 }]`.
 
 ### Adopting on an existing codebase
 

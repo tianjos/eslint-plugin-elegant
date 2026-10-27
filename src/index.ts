@@ -1,4 +1,5 @@
 import type { TSESLint } from '@typescript-eslint/utils';
+import noAnemicType from './rules/no-anemic-type';
 import noAnonymousParamType from './rules/no-anonymous-param-type';
 import noAnyReturn from './rules/no-any-return';
 import noBareCollection from './rules/no-bare-collection';
@@ -66,6 +67,7 @@ const rules = {
   'no-bare-collection': noBareCollection,
   'no-collection-internals': noCollectionInternals,
   'no-trivial-constant': noTrivialConstant,
+  'no-anemic-type': noAnemicType,
 };
 
 type Plugin = {
@@ -118,6 +120,7 @@ plugin.configs.recommended = {
     'elegant/no-bare-collection': 'error',
     'elegant/no-collection-internals': 'error',
     'elegant/no-trivial-constant': 'error',
+    'elegant/no-anemic-type': ['warn', { minFunctions: 2 }],
     'no-else-return': ['error', { allowElseIf: false }],
   },
 };
