@@ -9,6 +9,7 @@ import maxClassFields from './rules/max-class-fields';
 import maxReturns from './rules/max-returns';
 import maxClassMethods from './rules/max-class-methods';
 import noBooleanParam from './rules/no-boolean-param';
+import noCollectionInternals from './rules/no-collection-internals';
 import noCommentsInFunctionBody from './rules/no-comments-in-function-body';
 import noElseAfterThrow from './rules/no-else-after-throw';
 import noGettersSetters from './rules/no-getters-setters';
@@ -62,6 +63,7 @@ const rules = {
   'max-params': maxParams,
   'no-primitive-obsession': noPrimitiveObsession,
   'no-bare-collection': noBareCollection,
+  'no-collection-internals': noCollectionInternals,
 };
 
 type Plugin = {
@@ -112,6 +114,7 @@ plugin.configs.recommended = {
     'elegant/max-params': ['warn', { max: 3 }],
     'elegant/no-primitive-obsession': 'error',
     'elegant/no-bare-collection': 'error',
+    'elegant/no-collection-internals': 'error',
     'no-else-return': ['error', { allowElseIf: false }],
   },
 };
@@ -164,13 +167,14 @@ plugin.configs.off = {
  * The rules a spec legitimately trips, off — and only those.
  *
  * Which ones those are is a measurement, not a taste: over the corpus in
- * "Adopting on an existing codebase", these ten are the rules that fire
+ * "Adopting on an existing codebase", these eleven are the rules that fire
  * inside test files, each for a reason that holds there and nowhere else. A
  * mock has to assert a type over a partial object, a fixture mirrors a
  * nullable column, `make*(withRefunds: true)` names the scenario under test,
  * and a spec narrates. A spec asserts what a value object
  * unwraps to, `Competence.create('2026-04').toString()`, which is how a value
- * object is tested, and a fixture builds the arrays a repository returns.
+ * object is tested, and a fixture builds the arrays a repository returns and an
+ * assertion picks them apart: `expect(rows[0])`.
  *
  * The rules kept out of this list are kept out on purpose. `max-class-fields`,
  * `max-returns`, `no-static-members` and the rest report zero times in specs
@@ -191,6 +195,7 @@ plugin.configs.tests = {
     'elegant/max-params': 'off',
     'elegant/no-primitive-obsession': 'off',
     'elegant/no-bare-collection': 'off',
+    'elegant/no-collection-internals': 'off',
   },
 };
 
