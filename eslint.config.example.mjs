@@ -35,7 +35,7 @@ export default [
     },
   },
 
-  // Specs legitimately trip eleven of these rules — a mock asserts a type over a
+  // Specs legitimately trip twelve of these rules — a mock asserts a type over a
   // partial object, a fixture mirrors a nullable column, a spec narrates. The
   // list is measured, not guessed; see the README.
   {
